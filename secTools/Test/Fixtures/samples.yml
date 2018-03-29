@@ -1,0 +1,10 @@
+-   home_dir : 'C:\Users\micro_zo50ceu\OneDrive - University College London\SEC\Dissertation_code\secTools\Test\Fixtures'
+    import_cols: ['adsh','cik', 'name', 'sic','form', 'period', 'fy', 'fp','filed']
+    cat_cols: {'form':'category', 'period':'category', 'fp':'category'}
+    report: 'sub'
+    shape: [26,9]
+    
+    
+
+
+
