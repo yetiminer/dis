@@ -12,7 +12,7 @@ class importDataTools(object):
 		self.report=[]
 		self.filters={}
 		self.home_dir=[]
-        self.memusage=[]
+		self.memusage=[]
 
 
 	def add_folders(self):
@@ -43,7 +43,7 @@ class importDataTools(object):
 		usage_mb = usage_b / 1024 ** 2 # convert bytes to megabytes
 		memusage="{:03.2f} MB".format(usage_mb)
 		print(memusage)
-        self.memusage=memusage
+		self.memusage=memusage
 
 
 	def categorizeDF(self):
@@ -89,3 +89,13 @@ class importDataTools(object):
 		self.categorizeDF()
 		self.mem_usage()
 		print(self.df.shape)
+		
+def SecLoader(cfg,name):
+	allsubz=importDataTools(name)
+	allsubz.home_dir=cfg['home_dir']
+	allsubz.import_cols=(cfg['import_cols'])
+	allsubz.add_cat_cols(cfg['cat_cols'])
+	allsubz.add_folders()
+	allsubz.report=cfg['report']
+	allsubz.importSEC()
+	return allsubz
