@@ -1,5 +1,5 @@
-import os
 import pandas as pd
+import os
 
 class importDataTools(object):
 
@@ -89,12 +89,3 @@ class importDataTools(object):
 		self.categorizeDF()
 		self.mem_usage()
 		print(self.df.shape)
-		
-class DataLoader(object):
-	def importsub(folders):
-		home_dir=os.path.normpath('D:/SEC/Raw')
-		sub_import_cols=['adsh','cik', 'name', 'sic','form', 'period', 'fy', 'fp','filed']
-		sub_categorical_cols=['form', 'period', 'fp']
-		allsubdir=importDataTools.importSEC(home_dir,'sub', {},sub_import_cols,sub_categorical_cols,folders)
-
-		return allsubdir
