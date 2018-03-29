@@ -1,4 +1,5 @@
 class importData(object):
+import os
 
 
 	def get_folders(home_dir):
