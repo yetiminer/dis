@@ -1,5 +1,6 @@
 class importData(object):
 import os
+import pandas as pd
 
 
 	def get_folders(home_dir):
