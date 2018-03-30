@@ -85,9 +85,9 @@ class importDataTools(object):
 			except ValueError:
 				print(dirname, 'error')
 		
-		self.mem_usage()       
+		#self.mem_usage()       
 		self.categorizeDF()
-		self.mem_usage()
+		#self.mem_usage()
 		print(self.df.shape)
 		
 def SecLoader(cfg,name):

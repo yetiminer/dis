@@ -3,8 +3,27 @@
     cat_cols: {'form':'category', 'period':'category', 'fp':'category'}
     report: 'sub'
     shape: [26,9]
+
+-   home_dir : 'C:\Users\micro_zo50ceu\OneDrive - University College London\SEC\Dissertation_code\secTools\Test\Fixtures'
+    import_cols: ['adsh','tag','stmt','line','inpth']
+    cat_cols: {'adsh':'category','tag':'category', 'stmt':category, 'inpth':'category'}
+    report: 'pre'
+    name: 'pre_table' 
+    shape: [3178,5]
     
-    
+-   home_dir : 'C:\Users\micro_zo50ceu\OneDrive - University College London\SEC\Dissertation_code\secTools\Test\Fixtures'
+    import_cols: ['tag','abstract','datatype','iord','crdr','tlabel']
+    cat_cols: {'tag':'category','abstract':'category','datatype':'category','iord':'category','crdr':'category','tlabel':'category'}
+    report: 'tag'
+    name: 'tag_table' 
+    shape: [919,6]
+
+-   home_dir : 'C:\Users\micro_zo50ceu\OneDrive - University College London\SEC\Dissertation_code\secTools\Test\Fixtures'
+    import_cols: ['adsh','tag','ddate','qtrs','value']
+    cat_cols: {'adsh':'category','tag':'category','ddate':'category','qtrs':'category'}
+    report: 'num'
+    name: 'num_table' 
+    shape: 
 
 
 
