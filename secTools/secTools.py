@@ -90,7 +90,7 @@ class importDataTools(object):
 		#self.mem_usage()
 		print(self.df.shape)
 		
-def SecLoader(cfg,name):
+def SecLoader(cfg,name,filters=None):
 	allsubz=importDataTools(name)
 	allsubz.home_dir=cfg['home_dir']
 	allsubz.import_cols=(cfg['import_cols'])
@@ -98,4 +98,11 @@ def SecLoader(cfg,name):
 	allsubz.add_folders()
 	allsubz.report=cfg['report']
 	allsubz.importSEC()
+	if filters==None:
+		try:
+			allsubz.add_filters(cfg['filters'])
+		except KeyError:
+				print("no filters on import")
+	else:
+		allsubz.add_filters(filters)
 	return allsubz
