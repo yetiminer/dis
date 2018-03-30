@@ -33,6 +33,8 @@ class importDataTools(object):
              
 		
 	def add_filters(self,filters):
+		assert isinstance(filters, (list, tuple)) 
+		assert not isinstance(lst, basestring)
 		self.filters=filters
 	
 	def mem_usage(self):
@@ -55,6 +57,11 @@ class importDataTools(object):
 				print(col, ' only one datum ')
 
 
+	def filterdf(self,z):
+		for fil in self.filters:
+			z=z[z[fil].isin(self.filters[fil])]
+		return z
+
 	def importSEC(self):
 		#imports and amalgamtes data from separate files in separate folders
 		k=1
@@ -65,25 +72,22 @@ class importDataTools(object):
 			
 			try:
 				z=pd.read_table(target_dir,encoding = "ISO-8859-1",usecols=self.import_cols, low_memory=False)
-
-				
-				for fil in self.filters:
-
-					z=z[z[fil].isin(self.filters[fil])]
-
-
-				#z=categorizeDF()
-
-				if k==1:
-					self.df=z
-					k=k+1
-				else:
-					k=k+1
-					self.df=self.df.append(z)
-					#allz=categorizeDF(categorical_cols,allz)
-					print(z.shape,dirname,round((k-1)/len(self.folders),2))
 			except ValueError:
 				print(dirname, 'error')
+
+			z=self.filterdf(z)
+
+			#z=categorizeDF()
+
+			if k==1:
+				self.df=z
+				k=k+1
+			else:
+				k=k+1
+				self.df=self.df.append(z)
+				#allz=categorizeDF(categorical_cols,allz)
+				print(z.shape,dirname,round((k-1)/len(self.folders),2))
+
 		
 		#self.mem_usage()       
 		self.categorizeDF()
@@ -97,7 +101,6 @@ def SecLoader(cfg,name,filters=None):
 	allsubz.add_cat_cols(cfg['cat_cols'])
 	allsubz.add_folders()
 	allsubz.report=cfg['report']
-	allsubz.importSEC()
 	if filters==None:
 		try:
 			allsubz.add_filters(cfg['filters'])
@@ -105,4 +108,6 @@ def SecLoader(cfg,name,filters=None):
 				print("no filters on import")
 	else:
 		allsubz.add_filters(filters)
+	allsubz.importSEC()
+
 	return allsubz

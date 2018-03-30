@@ -23,7 +23,7 @@
     cat_cols: {'adsh':'category','tag':'category','ddate':'category','qtrs':'category'}
     report: 'num'
     name: 'num_table' 
-    shape: 
+    shape: [4930,5]
 
 
 
