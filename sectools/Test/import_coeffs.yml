@@ -1,0 +1,24 @@
+-   home_dir : 'D:/SEC/Raw'
+    import_cols: ['adsh','cik', 'name', 'sic','form', 'period', 'fy', 'fp','filed']
+    cat_cols: {'form':'category', 'period':'category', 'fp':'category'}
+    report: 'sub'
+    name: 'sub_table'
+
+-   home_dir : 'D:/SEC/Raw'
+    import_cols: ['adsh','tag','stmt','line','inpth']
+    cat_cols: {'adsh':'category','tag':'category', 'stmt':category, 'inpth':'category'}
+    report: 'pre'
+    name: 'pre_table' 
+    
+-   home_dir : 'D:/SEC/Raw'
+    import_cols: ['tag','abstract','datatype','iord','crdr','tlabel']
+    cat_cols: {'tag':'category','abstract':'category','datatype':'category','iord':'category','crdr':'category','tlabel':'category'}
+    report: 'tag'
+    name: 'tag_table' 
+
+-   home_dir : 'D:/SEC/Raw'
+    import_cols: ['adsh','tag','ddate','qtrs','value']
+    cat_cols: {'adsh':'category','tag':'category','ddate':'category','qtrs':'category'}
+    report: 'num'
+    name: 'num_table' 
+    
