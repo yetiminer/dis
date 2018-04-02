@@ -33,8 +33,10 @@ class importDataTools(object):
              
 		
 	def add_filters(self,filters):
-		assert isinstance(filters, (list, tuple)) 
-		assert not isinstance(lst, basestring)
+		assert isinstance(filters,dict)
+		for fil in filters:
+			assert isinstance(filters[fil], (list, tuple)) 
+			#assert not isinstance(fil, basestring)
 		self.filters=filters
 	
 	def mem_usage(self):
