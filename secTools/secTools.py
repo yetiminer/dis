@@ -14,6 +14,7 @@ class importDataTools(object):
 		self.filters={}
 		self.home_dir=[]
 		self.memusage=[]
+		self.mem_disp=False
 
 
 	def add_folders(self):
@@ -92,18 +93,19 @@ class importDataTools(object):
 				print(z.shape,dirname,round((k-1)/len(self.folders),2))
 
 		
-		#self.mem_usage()       
+		if self.mem_disp: self.mem_usage()       
 		self.categorizeDF()
-		#self.mem_usage()
+		if self.mem_disp: self.mem_usage()
 		print(self.df.shape)
 		
-def SecLoader(cfg,name,filters=None):
+def SecLoader(cfg,name,filters=None,mem_disp=False):
 	allsubz=importDataTools(name)
 	allsubz.home_dir=cfg['home_dir']
 	allsubz.import_cols=(cfg['import_cols'])
 	allsubz.add_cat_cols(cfg['cat_cols'])
 	allsubz.add_folders()
 	allsubz.report=cfg['report']
+	allsubz.mem_disp=mem_disp
 	if filters==None:
 		try:
 			allsubz.add_filters(cfg['filters'])
