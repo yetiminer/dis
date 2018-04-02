@@ -1,5 +1,6 @@
 import pandas as pd
 import os
+import argparse
 
 class importDataTools(object):
 
@@ -35,7 +36,7 @@ class importDataTools(object):
 	def add_filters(self,filters):
 		assert isinstance(filters,dict)
 		for fil in filters:
-			assert isinstance(filters[fil], (list, tuple)) 
+			assert isinstance(filters[fil], (list, tuple,object)) 
 			#assert not isinstance(fil, basestring)
 		self.filters=filters
 	
@@ -113,3 +114,33 @@ def SecLoader(cfg,name,filters=None):
 	allsubz.importSEC()
 
 	return allsubz
+	
+# def get_parser():
+    # import argparse
+
+    # parser = argparse.ArgumentParser(description="Tree calculation and plotting")
+    # # parser.add_argument("-l","--left",
+                         # # default=-0.2, type=float,
+                        # # help="How much left branch rotates at fork (negative) default -0.2")
+    # # parser.add_argument("-r","--right",
+                         # # default=0.2, type=float,
+                        # # help="How much right branch rotates at fork default 0.2")
+    # # parser.add_argument("-bs","--shrink",
+                         # # default=0.6, type=float,
+                        # # help="How much branches shrink at each layer default 0.6")
+    # # parser.add_argument("-s","--splits",
+                         # # default=5, type=int,
+                        # # help="How many layers of tree")
+    # # parser.add_argument("-p","--draw",
+                         # # default=True, type=str2bool,nargs='?', const=True,
+                        # # help="Whether to plot picture or not default True")
+    # # parser.add_argument("-c","--config",
+                         # # default="TreeConfig.yaml", type=str,
+                        # # help="Config file containing root coordinates of tree, first split and initial branch  length")
+    # # parser.add_argument("--check",
+                         # # default=False, type=str2bool,nargs='?', const=True,
+                        # # help="Enable the inbuilt output checker")
+
+    # return parser
+
+# if __name__=='__SecLoader__'
