@@ -49,6 +49,6 @@ def test_yamlload():
 	yamlLoad(pat)
 	
 	pat=os.path.join(os.path.dirname(__file__),'fixtures','error_yaml.yml')
-	with raises(AssertionError) as exception: 
+	with raises(UnboundLocalError) as exception: 
 		yamlLoad(pat)
 	

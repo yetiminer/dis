@@ -122,9 +122,10 @@ def yamlLoad(path):
 	
 	with open(path, 'r') as stream:
 		try:
-			print(yaml.load(stream))
+			cfg=yaml.load(stream)
 		except yaml.YAMLError as exc:
 			print(exc)
+	return cfg
 	
 # def get_parser():
     # import argparse
