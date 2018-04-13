@@ -1,6 +1,7 @@
 import pandas as pd
 import os
 import argparse
+import yaml
 
 class importDataTools(object):
 
@@ -116,6 +117,14 @@ def SecLoader(cfg,name,filters=None,mem_disp=False):
 	allsubz.importSEC()
 
 	return allsubz
+	
+def yamlLoad(path):
+	
+	with open(path, 'r') as stream:
+		try:
+			print(yaml.load(stream))
+		except yaml.YAMLError as exc:
+			print(exc)
 	
 # def get_parser():
     # import argparse

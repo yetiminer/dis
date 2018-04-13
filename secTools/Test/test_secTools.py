@@ -40,3 +40,15 @@ def test_input_data():
             with raises(AssertionError) as exception: 
                     SecLoader(fixture,'henry')
 
+					
+from secTools.secTools import yamlLoad
+def test_yamlload():
+#test yaml load
+	pat=os.path.join(os.path.dirname(__file__),'fixtures','samplesErrorInput.yml')
+	print(pat)
+	yamlLoad(pat)
+	
+	pat=os.path.join(os.path.dirname(__file__),'fixtures','error_yaml.yml')
+	with raises(AssertionError) as exception: 
+		yamlLoad(pat)
+	
