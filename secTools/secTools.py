@@ -16,16 +16,22 @@ class importDataTools(object):
 		self.home_dir=[]
 		self.memusage=[]
 		self.mem_disp=False
+		self.years=None
 
 
 	def add_folders(self):
 	#get the names of the folders of the data
 
 		folders=[]
-		for dirg in os.listdir(self.home_dir):
-			if os.path.isdir(os.path.join(self.home_dir,dirg)) and dirg[0]=='2' :
+		if self.years is None:
+			for dirg in os.listdir(self.home_dir):
+				if os.path.isdir(os.path.join(self.home_dir,dirg)) and dirg[0]=='2' :
 
-					folders.append(dirg)
+						folders.append(dirg)
+		else:
+			for dirg in os.listdir(self.home_dir):
+				if os.path.isdir(os.path.join(self.home_dir,dirg)) and dirg[0:4] in self.years:
+						folders.append(dirg)
 		self.folders=folders
 			
 	def add_report(self,report):
@@ -104,8 +110,9 @@ def SecLoader(cfg,name,filters=None,mem_disp=False):
 	allsubz.home_dir=cfg['home_dir']
 	allsubz.import_cols=(cfg['import_cols'])
 	allsubz.add_cat_cols(cfg['cat_cols'])
-	allsubz.add_folders()
+	
 	allsubz.report=cfg['report']
+	
 	allsubz.mem_disp=mem_disp
 	if filters==None:
 		try:
@@ -114,6 +121,12 @@ def SecLoader(cfg,name,filters=None,mem_disp=False):
 				print("no filters on import")
 	else:
 		allsubz.add_filters(filters)
+		
+	if 'years' in cfg:
+		
+		allsubz.years=cfg['years']
+	
+	allsubz.add_folders()
 	allsubz.importSEC()
 
 	return allsubz

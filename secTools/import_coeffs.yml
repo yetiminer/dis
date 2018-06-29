@@ -21,7 +21,7 @@
     
 
 -   home_dir : 'D:/SEC/Raw'
-    import_cols: ['adsh','tag','ddate','qtrs','value']
+    import_cols: ['adsh','tag','ddate','qtrs','value','uom','footnote']
     cat_cols: {'adsh':'category','tag':'category','ddate':'category','qtrs':'category'}
     report: 'num'
     name: 'num_table' 
