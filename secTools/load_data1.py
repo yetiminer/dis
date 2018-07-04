@@ -287,6 +287,10 @@ class SECdataset(object):
 		ddf1=pd.concat([df1,df2],sort=True)
 		
 		ddf1=ddf1.groupby(['adsh','period','tag'])['value'].max().unstack().dropna(how='all')
+		
+		#sort columns nicely in descending order of data size
+		ddf1=self.reorder_cols_by_data_count(df=ddf1)
+
 
 
 		if inplace:
@@ -315,10 +319,21 @@ class SECdataset(object):
 		c = [item for sublist in c[1:] for item in sublist]
 		self.FT=self.FT[c]
 		
+	def reorder_cols_by_data_count(self,df=None,inplace=False):
+		if df is None:
+			df=self.FT
+		columns=df.count().sort_values(ascending=False).index
+		df=df[columns]
+		
+		if inplace:
+			self.FT=df
+		else:
+			return df
 		
 	
+	
 	def normalise(self,cols,df2=None,inplace=False):
-		if inplace:
+		if df2 is None:
 			df2=self.FT
 		#normalizes self.FT according to max value in cols. Drops records with no normalizer
 		
@@ -332,6 +347,8 @@ class SECdataset(object):
 		norms=df2[cols].max(axis=1).values
 		df3=df2.div(norms, axis='rows')
 		df3.replace([np.inf, -np.inf], np.nan,inplace=True)
+		
+		df3=self.reorder_cols_by_data_count(df=df3)
 		
 		if inplace:
 			self.FT=df3
