@@ -5,6 +5,7 @@ import yaml
 from sqlite3 import Error
 import sqlalchemy
 from sqlalchemy import create_engine, MetaData
+import pickle
 
 class importDataTools(object):
 
@@ -292,3 +293,10 @@ def delete_table(engine,tag):
 	s=text("DROP TABLE "+ tag)
 	conn.execute(s)
 
+def load_from_pickle(file):
+	ds=pickle.load(open(file,"rb"))
+	return ds
+	
+def save_pickle(location,data):
+	pickle.dump(data, open(location,"wb"))
+	
