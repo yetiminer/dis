@@ -23,12 +23,12 @@ def split_data_X_Y(df,cols):
 def remove_outlier(X,Y,level_x,level_y):
     print(Y.shape,'Y shape before threshhold cut')
 
-    a=np.abs(Y)<2.5
+    a=np.abs(Y)<level_y
     Y=Y[a]
     
     print(Y.shape, 'Y shape after cut')
     
     X=X[a.reshape(X.shape[0])]
-    X[np.abs(X)>2.5]=np.nan
+    X[np.abs(X)>level_y]=np.nan
 
     return X,Y
