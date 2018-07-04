@@ -31,9 +31,9 @@ def generator_nw(**kwargs):
 
 	
 	fe1=64
-	fe2=32
-	fe3=16
-	BottleneckDim=8
+	fe2=64
+	fe3=32
+	BottleneckDim=16
 	fe5=32
 	fe6=64
 	a=0.2 #alpha
@@ -124,3 +124,60 @@ def gan_nw(Generator,Discriminator,**kwargs):
 
 	GAN.compile(optimizer='adam',loss=gan_loss)
 	return GAN
+	
+def generator_nw_unet(**kwargs):
+	n_x=kwargs['input_dim']
+	#first encoder
+		
+	#generator params
+
+	
+	fe1=64
+	
+	fe2=64
+	fe3=32
+	BottleneckDim=16
+	fe5=32
+	fe6=64
+	a=0.2 #alpha
+	dout=0.2 #dropout
+
+	X_in=Input(shape=(n_x,),name='financial_cond_input')
+	Y_in=Input(shape=(1,),name='financial_manip') #this is the dimension we are manipulating
+
+	concat_en=concat([X_in,Y_in])
+
+	#image encoder layers
+	h1_en=Dense(fe1)(concat_en)
+	h1_en=Dropout(dout)(h1_en)
+	
+	h2_en=Dense(fe2)(h1_en)
+	h2_en=LeakyReLU(alpha=a)(h2_en)
+	h2_en=Dropout(dout)(h2_en)
+
+	h3_en=Dense(fe3)(h2_en)
+	h3_en=LeakyReLU(alpha=a)(h3_en)
+	h3_en=Dropout(dout)(h3_en)
+
+	h4_bot=Dense(BottleneckDim)(h3_en)
+	h4_bot=LeakyReLU(alpha=a)(h4_bot)
+	h4_bot=Dropout(dout)(h4_bot)
+				
+	h5_dec=Dense(fe5)(h4_bot)
+	h5_dec=LeakyReLU(alpha=a)(h5_dec)
+	h5_dec=Dropout(dout)(h5_dec)
+	h5_dec=concat([h5_dec,h2_en])
+
+	h6_dec=Dense(fe6)(h5_dec)
+	h6_dec=LeakyReLU(alpha=a)(h6_dec)
+	h6_dec=Dropout(dout)(h6_dec)
+	h6_dec=concat([h6_dec,h1_en])
+	
+		
+	out_dec=Dense(n_x)(h6_dec)
+	out_dec=concat([out_dec,Y_in])
+				
+	Generator=Model([X_in,Y_in],out_dec)
+	Generator.summary()
+	Generator.compile(optimizer='adam',loss=recon_loss)
+	return Generator

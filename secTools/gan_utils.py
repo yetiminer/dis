@@ -74,7 +74,7 @@ def make_batch(x_train,y_train,batch_size,real=True):
         
         trainidx = np.random.randint(0,x_train.shape[0],size=batch_size)
         gen_feed_batch_x=x_train[trainidx]
-        gen_feed_batch_y=np.multiply(y_train[trainidx],np.random.uniform(1,3,size=(batch_size,1))) ##### here is where we ask the generator to exaggerate y coordinate.
+        gen_feed_batch_y=np.multiply(y_train[trainidx],np.random.uniform(0.7,3,size=(batch_size,1))) ##### here is where we ask the generator to exaggerate y coordinate.
         #,np.random.uniform(1,3,size=batch_size))
         if real:
             return gen_feed_batch_x, gen_feed_batch_y, real_image_batch_x,real_image_batch_y
