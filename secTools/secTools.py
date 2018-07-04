@@ -2,6 +2,9 @@ import pandas as pd
 import os
 import argparse
 import yaml
+from sqlite3 import Error
+import sqlalchemy
+from sqlalchemy import create_engine, MetaData
 
 class importDataTools(object):
 
@@ -33,6 +36,7 @@ class importDataTools(object):
 				if os.path.isdir(os.path.join(self.home_dir,dirg)) and dirg[0:4] in self.years:
 						folders.append(dirg)
 		self.folders=folders
+		print(folders)
 			
 	def add_report(self,report):
 		self.report=report
@@ -59,14 +63,21 @@ class importDataTools(object):
 		self.memusage=memusage
 
 
-	def categorizeDF(self):
+	def categorizeDF(self,df=None):
+		
+		if df is None:
+			df=self.df
+	
 		#converts a list of columns into category type for pandas df
 		for col in self.cat_cols:
 			try:
-				self.df[col]=self.df[col].astype(self.cat_cols[col])
+				df[col]=df[col].astype(self.cat_cols[col])
 			except NotImplementedError:
 				print(col, ' only one datum ')
-
+		if df is None:
+			self.df=df
+		else:
+			return df
 
 	def filterdf(self,z):
 		for fil in self.filters:
@@ -74,6 +85,38 @@ class importDataTools(object):
 		return z
 
 	def importSEC(self):
+		#imports and amalgamtes data from separate files in separate folders
+		k=1
+		report=self.report+'.txt'
+		df_list=[]
+		for dirname in self.folders:
+            
+			target_dir=os.path.join(self.home_dir,dirname,report)
+			
+			try:
+				z=pd.read_table(target_dir,encoding = "ISO-8859-1",usecols=self.import_cols, low_memory=False)
+			except ValueError:
+				print(dirname, 'error')
+
+			z=self.filterdf(z)
+
+			#z=self.categorizeDF(z)
+
+			df_list.append(z)
+			
+			
+				#allz=categorizeDF(categorical_cols,allz)
+			print(z.shape,dirname,round((k-1)/len(self.folders),2))
+		
+		self.df=pd.concat(df_list)
+		
+		if self.mem_disp: self.mem_usage()       
+		self.categorizeDF()
+		if self.mem_disp: self.mem_usage()
+		print(self.df.shape)
+		
+	def importSECold(self):
+	#note the iterative append which should be slower
 		#imports and amalgamtes data from separate files in separate folders
 		k=1
 		report=self.report+'.txt'
@@ -104,6 +147,7 @@ class importDataTools(object):
 		self.categorizeDF()
 		if self.mem_disp: self.mem_usage()
 		print(self.df.shape)
+
 		
 def SecLoader(cfg,name,filters=None,mem_disp=False):
 	allsubz=importDataTools(name)
@@ -169,3 +213,82 @@ def yamlLoad(path):
     # return parser
 
 # if __name__=='__SecLoader__'
+
+
+def upload_to_table(df,tab,engine,batchnum=500):
+
+    
+    df.to_sql(tab,engine, chunksize=batchnum)
+
+    df2=pd.read_sql_table(tab,engine)
+    try:
+        assert df2.shape[0]==df.shape[0]
+    except AssertionError:
+        print('upload not totally successful')
+
+
+
+def create_connection(db_file):
+    """ create a database connection to a SQLite database """
+    try:
+        conn = sqlite3.connect(db_file)
+        print(sqlite3.version)
+    except Error as e:
+        print(e)
+    finally:
+        conn.close()  
+
+def load_from_db(engine,tables=None,simplify=False):
+	tables=['tag','pre','num','sub']
+
+	data={}
+
+	for t in tables:
+		data[t]=pd.read_sql_table(t,engine)
+		if simplify:
+			data[t]=streamline({t:data[t]})
+	return data 
+	
+def categorizeDF(df,cat_cols):
+    #converts a list of columns into category type for pandas df
+    for col in cat_cols:
+        try:
+            df[col]=df[col].astype(cat_cols[col])
+        except NotImplementedError:
+            print(col, ' only one datum ')
+        except KeyError:
+            pass
+        
+    return df
+
+def mem_usage(df):
+    if isinstance(df,pd.DataFrame):
+        usage_b =df.memory_usage(deep=True).sum()
+    else: # we assume if not a df it's a series
+        usage_b = df.memory_usage(deep=True)
+    usage_mb = usage_b / 1024 ** 2 # convert bytes to megabytes
+    memusage="{:03.2f} MB".format(usage_mb)
+    print(memusage)
+
+def streamline(data,cfg):
+	for k in data:
+		for p in cfg:
+			if p['report']==k:
+				mem_usage(data[k])
+				data[k]=categorizeDF(data[k],p['cat_cols'])
+				mem_usage(data[k])
+
+	return data
+
+def updatemeta(engine):
+	metadata=MetaData()
+	metadata.reflect(engine) #updates metadata.
+	for t in metadata.tables:
+		print(t)
+		
+def delete_table(engine,tag):
+	from sqlalchemy import text
+	conn=engine.connect()
+	s=text("DROP TABLE "+ tag)
+	conn.execute(s)
+

@@ -1,4 +1,4 @@
--   home_dir : 'D:/SEC/Raw'
+-   home_dir : '~/Documents/SEC/Raw'
     import_cols: ['adsh','cik', 'name', 'sic','form', 'period', 'fy', 'fp','filed']
     cat_cols: {'form':'category', 'period':'category', 'fp':'category'}
     report: 'sub'
@@ -6,21 +6,21 @@
     filters: {fy:[2009,2010,2011,2012,2013,2014,2015,2016,2017,2018],form:['10-K'] }
     #,'10-Q']}
 
--   home_dir : 'D:/SEC/Raw'
+-   home_dir : ~/Documents/SEC/Raw'
     import_cols: ['adsh','tag','stmt','line','inpth']
     cat_cols: {'adsh':'category','tag':'category', 'stmt':category, 'inpth':'category'}
     report: 'pre'
     name: 'pre_table' 
     
     
--   home_dir : 'D:/SEC/Raw'
+-   home_dir : '~/Documents/SEC/Raw'
     import_cols: ['tag','abstract','datatype','iord','crdr','tlabel']
     cat_cols: {'tag':'category','abstract':'category','datatype':'category','iord':'category','crdr':'category','tlabel':'category'}
     report: 'tag'
     name: 'tag_table'
     
 
--   home_dir : 'D:/SEC/Raw'
+-   home_dir : '~/Documents/SEC/Raw'
     import_cols: ['adsh','tag','ddate','qtrs','value','uom','footnote']
     cat_cols: {'adsh':'category','tag':'category','ddate':'category','qtrs':'category'}
     report: 'num'
