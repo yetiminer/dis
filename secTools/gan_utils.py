@@ -4,6 +4,7 @@ from keras import backend as K
 from IPython import display
 from tqdm import tqdm
 import numpy as np
+import random
 
 # Freeze weights in the discriminator training
 def make_trainable(net, val):
@@ -159,4 +160,41 @@ def train_for_n(**kwargs):
 		
 	return losses
 		
-		
+def Discrim_pre_train(x_train,y_train,Discrim,train_size=1000):
+
+    #initate Discriminator network
+
+    ntrain = train_size #choose initial training size for discriminator
+    n=x_train.shape[0]
+
+    #draw some financials at random
+    trainidx = random.sample(range(0,n), ntrain)
+    XT = x_train[trainidx]
+    YT=y_train[trainidx]
+
+    XT_aug=np.concatenate((XT,YT),axis=1)
+
+
+    #generate some 'fake' financials
+    noise_gen = np.random.normal(0,1,size=[ntrain,XT_aug.shape[1]])
+    noise_gen[XT_aug==0]=0 #make it similarly sparse
+
+    #concatenate
+    XT_aug_plus_noise = np.concatenate((XT_aug, noise_gen))
+
+    #make indicator variable
+    y = np.zeros([2*ntrain,2])
+    y[:ntrain,1]=1
+    y[ntrain:,0]=1
+
+    make_trainable(Discrim,True)
+    Discrim.fit(XT_aug_plus_noise ,y,epochs=10,batch_size=32)
+    y_hat=Discrim.predict(XT_aug_plus_noise)
+    y_hat_idx = np.argmax(y_hat,axis=1)
+    y_idx = np.argmax(y,axis=1)
+    diff = y_idx-y_hat_idx
+    n_tot = y.shape[0]
+    n_rig = (diff==0).sum()
+    acc = n_rig*100.0/n_tot
+    print("Accuracy:",acc, "%", n_rig, ' of ', n_tot, 'correct')
+    return XT_aug,y_hat		
