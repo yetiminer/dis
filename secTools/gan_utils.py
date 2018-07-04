@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 from keras.losses import mse, binary_crossentropy, mean_squared_error, mean_absolute_error
 from keras import backend as K
 from IPython import display
+from tqdm import tqdm
 
 # Freeze weights in the discriminator training
 def make_trainable(net, val):
