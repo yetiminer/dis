@@ -60,7 +60,7 @@ def recon_loss(y_true, y_pred):
     mask_value=0
     mask = K.cast(K.not_equal(y_true, mask_value), K.floatx())
 
-    return mean_absolute_error(y_true,y_pred)
+    return mean_absolute_error(y_true*mask,y_pred*mask)
 
 
 def make_batch(x_train,y_train,batch_size,real=True):

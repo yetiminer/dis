@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-
+from sklearn.neighbors import KernelDensity
 
 def split_data_X_Y(df,cols):
 	#for the
@@ -22,15 +22,48 @@ def split_data_X_Y(df,cols):
 
 	return X,Y, cols
 
-def remove_outlier(X,Y,level_x,level_y):
-    print(Y.shape,'Y shape before threshhold cut')
-
-    a=np.abs(Y)<level_y
-    Y=Y[a]
+def remove_outlier(X,level_x,Y=None,level_y=None):
     
-    print(Y.shape, 'Y shape after cut')
-    
-    X=X[a.reshape(X.shape[0])]
-    X[np.abs(X)>level_y]=np.nan
+	if Y is None:
+	
+		X[np.abs(X)>level_x]=np.nan
+		
+		return X
+	
+	else:
+		print(Y.shape,'Y shape before threshhold cut')
 
-    return X,Y
+		a=np.abs(Y)<level_y
+		Y=Y[a]
+		
+		print(Y.shape, 'Y shape after cut')
+		
+		X=X[a.reshape(X.shape[0])]
+		X[np.abs(X)>level_y]=np.nan
+
+		return X,Y
+		
+
+
+
+
+def augment_x(x_train,ds,repeats=2,fit_col='Assets',seed=22):
+    #augments data with random multiplactive constant on all present value columns
+    #distribution of this constant is that of the eg Assets column (which is assets growth)
+    
+    
+    aug_mask=list(map(lambda x: x[0]!='p',ds.FT.columns[0:200]))
+    
+    ker_fit_data=ds.FT[fit_col].values
+    ker_fit_data=ker_fit_data[(ker_fit_data>0.5)*(ker_fit_data<1.5)]
+    ker_fit_data=ker_fit_data.reshape(-1,1)
+    
+    kde = KernelDensity(kernel='gaussian', bandwidth=0.05).fit(ker_fit_data)
+    x_train_aug=np.repeat(x_train,repeats,axis=0)
+    
+    number=x_train_aug.shape[0]
+    seed=22
+    scale_rand=kde.sample([number], seed)
+    
+    x_train_aug[:,aug_mask]*scale_rand
+    return x_train_aug
