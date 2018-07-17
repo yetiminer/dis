@@ -14,7 +14,7 @@ def recon_loss_mse(y_true, y_pred):
 
     return mse(y_true*mask,y_pred*mask)
 	
-def other_recon_loss_mse(y_true, y_pred):
+def sparse_recon_loss_mse(y_true, y_pred):
 	#this gets the numerator correct on the final denominator of the loss function
 	#does this make a difference? 
 	mask_value=0
@@ -24,7 +24,7 @@ def other_recon_loss_mse(y_true, y_pred):
 
 	return 1/n*K.sum(K.square(y_true*mask-y_pred*mask))
 	
-def other_recon_loss_abs(y_true,y_pred):
+def sparse_recon_loss_abs(y_true,y_pred):
 	#this gets the numerator correct on the final denominator of the loss function
 	#does this make a difference? 
 	mask_value=0
@@ -61,10 +61,10 @@ def make_recon_loss_combi(lamb):
     
     return recon_loss_combi
 	
-def make_other_recon_loss_combi(lamb):
+def make_sparse_recon_loss_combi(lamb):
 
-    def recon_loss_combi(y_true, y_pred):
+    def sparse_recon_loss_combi(y_true, y_pred):
 
-        return lamb*other_recon_loss_mse(y_true,y_pred)+(1-lamb)*other_recon_loss_abs(y_true,y_pred)
+        return lamb*sparse_recon_loss_mse(y_true,y_pred)+(1-lamb)*sparse_recon_loss_abs(y_true,y_pred)
     
-    return recon_loss_combi
+    return sparse_recon_loss_combi
