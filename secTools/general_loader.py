@@ -3,16 +3,20 @@ from load_data1 import SecTable, SECdataset
 from sqlalchemy import create_engine, MetaData
 
 def ds_from_db(**kwargs):
+	
+	
 
-	cfg=kwargs['cfg']
-	threshold=kwargs['tag_min_count_threshold']
-	normalise_cols=kwargs['normalise_cols']
 	
 	if 'pickle_file' in kwargs:
 		pickle_file=kwargs['pickle_file']
 		ds=load_from_pickle(pickle_file)
 		
 	elif 'reimport_db' in kwargs:
+		cfg=kwargs['cfg']
+		threshold=kwargs['tag_min_count_threshold']
+		normalise_cols=kwargs['normalise_cols']
+	
+	
 		reimport_db=kwargs['reimport_db']
 		db_location=kwargs['db_location']
 		
