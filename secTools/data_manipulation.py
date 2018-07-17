@@ -22,12 +22,16 @@ def split_data_X_Y(df,cols):
 
 	return X,Y, cols
 
-def remove_outlier(X,level_x,Y=None,level_y=None):
+def remove_outlier(X,level_x,Y=None,level_y=None,replace_nan=True,replace_with=0):
     
 	if Y is None:
 	
 		X[np.abs(X)>level_x]=np.nan
 		
+		if replace_nan:
+			X[np.isnan(X)]=replace_with
+			assert(~np.any(np.isnan(X)))
+			
 		return X
 	
 	else:
@@ -40,6 +44,12 @@ def remove_outlier(X,level_x,Y=None,level_y=None):
 		
 		X=X[a.reshape(X.shape[0])]
 		X[np.abs(X)>level_y]=np.nan
+		
+		if replace_nan:
+			X[np.isnan(X)]=replace_with
+			Y[np.isnan(Y)]=replace_with
+			assert(~np.any(np.isnan(X)))
+			assert(~np.any(np.isnan(Y)))
 
 		return X,Y
 		
