@@ -332,9 +332,9 @@ class SECdataset(object):
 		
 	
 	
-	def normalise(self,cols,df2=None,inplace=False):
+	def normalise(self,cols,df2=None,inplace=False,reorder=True):
 		if df2 is None:
-			df2=self.FT
+			df2=self.FT.copy()
 		#normalizes self.FT according to max value in cols. Drops records with no normalizer
 		
 		#need to get rid of records where there is no normalising value
@@ -348,7 +348,8 @@ class SECdataset(object):
 		df3=df2.div(norms, axis='rows')
 		df3.replace([np.inf, -np.inf], np.nan,inplace=True)
 		
-		df3=self.reorder_cols_by_data_count(df=df3)
+		if reorder:
+			df3=self.reorder_cols_by_data_count(df=df3)
 		
 		if inplace:
 			self.FT=df3
