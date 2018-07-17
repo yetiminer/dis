@@ -1,6 +1,7 @@
 
 from keras.losses import mse, mean_squared_error, mean_absolute_error
 from keras import backend as K
+import numpy as np
 
 def recon_loss_abs(y_true, y_pred):
     mask_value=0
@@ -68,3 +69,31 @@ def make_sparse_recon_loss_combi(lamb):
         return lamb*sparse_recon_loss_mse(y_true,y_pred)+(1-lamb)*sparse_recon_loss_abs(y_true,y_pred)
     
     return sparse_recon_loss_combi
+	
+
+#I was worried about testing the loss functions since tensor functions are not easy to evaluate.
+  	
+def np_sparse_loss(x_test,x_fit,weight=0.5):
+	tf=x_test==0
+	x_fit[tf]=0
+
+	#count the number of non zero entries
+	denom=np.sum(~tf)
+	if denom==0:
+		return 0
+	else:
+
+		l1=np.sum(np.abs(x_fit-x_test))/denom
+		l2=np.sum(((x_fit-x_test)**2))/denom
+
+	return l2*weight+(1-weight)*l1
+	
+def test_sparse_function(x_test,x_fit,weight):
+	
+	sparse_recon_loss_combi=make_sparse_recon_loss_combi(weight)
+	
+	
+	keras_ans=K.eval(sparse_recon_loss_combi(K.variable(x_test), K.variable(x_fit)))
+	numpy_ans=np_sparse_loss(x_test,x_fit,weight)
+	return keras_ans,numpy_ans
+	
