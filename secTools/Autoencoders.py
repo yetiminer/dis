@@ -2,6 +2,13 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+
+from numpy.random import seed
+seed(35)
+from tensorflow import set_random_seed
+set_random_seed(35)
+
+
 from keras.layers import (Lambda, Input, Dense, Masking, merge,
                           Dropout, Activation, GaussianNoise,
                           AlphaDropout, GaussianDropout,
@@ -169,10 +176,30 @@ class autoencoder(object):
 			
 		plt.show()	
 
+
+def make_ae_dict_from_dict(layer_dic,layer_param_dic,model_data_dic,train_dic):
+	#takes a dictionary of layers, layer params, model_data and training dict
+	#builds and compiles autoencoder returning dictionary of AEs. All dictionaries
+	#must share a key which is name of AEs
+	def make_ae_model(model_layer,layer_param_dic,data_dic,name,train_dic):
+		layers=model_layer(data_dic['train_data'][0],**layer_param_dic)
+
+		#this command merges dictionaries into a new one without affecting old ones new as of python3.5
+		new_train_dic={**data_dic,**train_dic}
+		#print(new_train_dic)
+		model=autoencoder(layers,name=name,**new_train_dic)
+		return model
+
+	ae_dict={}
+	for k in layer_dic:
+		ae_dict[k]=make_ae_model(layer_dic[k],layer_param_dic[k],model_data_dic[k],k,train_dic)
 		
-def model_node_wrap(nodes):
+	return ae_dict
+
+		
+def model_node_wrap(nodes,ae_layers,x_train,layer_dic):
     #a function which makes a model a function of node_list only
-    layers=model_3h(x_train,drop_ra=0.0,l1_reg=0, g_noise=0.05, ker_init=ker_init,nodes=nodes)
+    layers=ae_layers(x_train,nodes=nodes,**layer_dic)
     mod=autoencoder(layers,name=str(nodes),**train_dic)
     return mod
 	
@@ -257,16 +284,27 @@ def ensure_dir(file_path):
     if not os.path.exists(directory):
         os.makedirs(directory)
 
-def create_eval_dic(ae_dic,x_test,columns=['Loss','unweighted loss','mse loss','abs loss']):
-	#sometimes get passed dictionary of autoencoders not models
-	try:
-		eval_dic={k:val.evaluate(x=x_test,y=x_test) for k,val in ae_dic.items()}
-	except AttributeError:
-		eval_dic={k:val.model.evaluate(x=x_test,y=x_test) for k,val in ae_dic.items()}
+def convert_to_keras_ae_dic(ae_dict):
+    for k,val in ae_dict.items():
+        is_keras=isinstance(val,Sequential)
+        is_ae=isinstance(val,autoencoder)
 
-	df=pd.DataFrame.from_dict(eval_dic,orient='index',columns=columns)
-	df.sort_values(by='Loss',axis=0,inplace=True)
-	return df, eval_dic	
+    if is_keras:
+        pass
+    elif is_ae:
+        ae_dic={k:val.model for k,val in ae_dict.items()}
+    return ae_dic
+
+
+def create_eval_dic(ae_dic,x_test,columns=['Loss','unweighted loss','mse loss','abs loss']):
+
+
+    eval_dic={k:val.evaluate(x=x_test,y=x_test) for k,val in ae_dic.items()}
+
+
+    df=pd.DataFrame.from_dict(eval_dic,orient='index',columns=columns)
+    df.sort_values(by='Loss',axis=0,inplace=True)
+    return df, eval_dic	
 
 def create_params_dic(ae_dic):
 
@@ -284,11 +322,14 @@ def create_params_dic(ae_dic):
        # print('Total params: {:,}'.format(trainable_count + non_trainable_count))
        # print('Trainable params: {:,}'.format(trainable_count))
        # print('Non-trainable params: {:,}'.format(non_trainable_count))
-    df=pd.DataFrame.from_dict(params_dic,orient='index',columns=['Trainable','Untrainable'])
+    df=pd.DataFrame.from_dict(params_dic,orient='index',columns=['Trainable params','Untrainable params'])
 	
     return df, params_dic
 	
-def create_loss_param_table(ae_dic,x_test,columns):
+def create_loss_param_table(ae_dic,x_test,columns=['Loss','unweighted loss','50-50 sparse loss','mse loss','abs loss']):
+    #sometimes get passed dictionary of autoencoders not models
+    ae_dic=convert_to_keras_ae_dic(ae_dic)
+    
     df,eval_dic=create_eval_dic(ae_dic,x_test,columns)
     df2,param_dic=create_params_dic(ae_dic)
     df3=df.merge(df2,left_index=True,right_index=True)

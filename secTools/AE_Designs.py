@@ -1,3 +1,8 @@
+from numpy.random import seed
+seed(35)
+from tensorflow import set_random_seed
+set_random_seed(35)
+
 
 from keras.layers import (Lambda, Input, Dense, Masking, merge,
                           Dropout, Activation, GaussianNoise,
@@ -20,7 +25,7 @@ import os
 
 
 
-def model_first(X,drop_ra=0.7,l1_reg=0.001,bias=0.1,g_noise=0.2,nodes=[32,16,5,16,32]):
+def model_first(X,drop_ra=0.,l1_reg=0.00,bias=0.1,g_noise=0.,nodes=[32,16,5,16,32]):
 	#a list of layers, each comprised of a dictionary of layer elements
 
 	input_dim=X.shape[1]
@@ -29,16 +34,16 @@ def model_first(X,drop_ra=0.7,l1_reg=0.001,bias=0.1,g_noise=0.2,nodes=[32,16,5,1
 
 	layers.append({'layer':Dense(nodes[0],input_dim=input_dim,kernel_regularizer=l1(0.))
 						   })
-	layers.append({'layer':Dense(nodes[1],input_dim=input_dim, bias_initializer=Constant(value=bias),activation='relu'),
+	layers.append({'layer':Dense(nodes[1], bias_initializer=Constant(value=bias),activation='relu'),
 						   })
 
 	layers.append({'layer':Dense(nodes[2],bias_initializer=Constant(value=bias),activation='relu'),
 						   })
 
-	layers.append({'layer':Dense(nodes[3],input_dim=input_dim,bias_initializer=Constant(value=bias),activation='relu'),
+	layers.append({'layer':Dense(nodes[3],bias_initializer=Constant(value=bias),activation='relu'),
 						   })
 
-	layers.append({'layer':Dense(nodes[4],input_dim=input_dim,bias_initializer=Constant(value=bias),activation='relu'),
+	layers.append({'layer':Dense(nodes[4],bias_initializer=Constant(value=bias),activation='relu'),
 						   })
 
 	layers.append({'layer':Dense(input_dim,kernel_regularizer=l1(l1_reg)),
@@ -47,7 +52,7 @@ def model_first(X,drop_ra=0.7,l1_reg=0.001,bias=0.1,g_noise=0.2,nodes=[32,16,5,1
 	return layers
 	
 #try Prelu activation function	
-def model_second(X,drop_ra=0.7,l1_reg=0.001,bias=0.1,g_noise=0.2,nodes=[32,16,5,16,32]):
+def model_second(X,drop_ra=0.,l1_reg=0.00,bias=0.1,g_noise=0.,nodes=[32,16,5,16,32]):
 	#a list of layers, each comprised of a dictionary of layer elements
 	#K.clear_session()
 	input_dim=X.shape[1]
@@ -56,16 +61,16 @@ def model_second(X,drop_ra=0.7,l1_reg=0.001,bias=0.1,g_noise=0.2,nodes=[32,16,5,
 
 	layers.append({'layer':Dense(nodes[0],input_dim=input_dim,kernel_regularizer=l1(0.)),
 						   'advanced_activation':PReLU()})
-	layers.append({'layer':Dense(nodes[1],input_dim=input_dim, bias_initializer=Constant(value=bias)),
+	layers.append({'layer':Dense(nodes[1], bias_initializer=Constant(value=bias)),
 						   'advanced_activation':PReLU()})
 
 	layers.append({'layer':Dense(nodes[2],bias_initializer=Constant(value=bias)),
 						   'advanced_activation':PReLU()})
 
-	layers.append({'layer':Dense(nodes[3],input_dim=input_dim,bias_initializer=Constant(value=bias)),
+	layers.append({'layer':Dense(nodes[3],bias_initializer=Constant(value=bias)),
 						   'advanced_activation':PReLU()})
 
-	layers.append({'layer':Dense(nodes[4],input_dim=input_dim,bias_initializer=Constant(value=bias)),
+	layers.append({'layer':Dense(nodes[4],bias_initializer=Constant(value=bias)),
 						   'advanced_activation':PReLU()})
 
 	layers.append({'layer':Dense(input_dim,kernel_regularizer=l1(l1_reg)),
@@ -74,7 +79,7 @@ def model_second(X,drop_ra=0.7,l1_reg=0.001,bias=0.1,g_noise=0.2,nodes=[32,16,5,
 	return layers
 	
 #add in dropout	functionality
-def model_third(X,drop_ra=0.1,l1_reg=0.001,bias=0.1,g_noise=0.2,nodes=[32,16,5,16,32]):
+def model_third(X,drop_ra=0.,l1_reg=0.,bias=0.1,g_noise=0.,nodes=[32,16,5,16,32]):
 	#a list of layers, each comprised of a dictionary of layer elements
 	#K.clear_session()
 	input_dim=X.shape[1]
@@ -83,16 +88,16 @@ def model_third(X,drop_ra=0.1,l1_reg=0.001,bias=0.1,g_noise=0.2,nodes=[32,16,5,1
 
 	layers.append({'layer':Dense(nodes[0],input_dim=input_dim,kernel_regularizer=l1(0.)),
 						   'advanced_activation':PReLU(),'dropout_rate':drop_ra})
-	layers.append({'layer':Dense(nodes[1],input_dim=input_dim, bias_initializer=Constant(value=bias)),
+	layers.append({'layer':Dense(nodes[1], bias_initializer=Constant(value=bias)),
 						   'advanced_activation':PReLU(), 'dropout_rate':drop_ra})
 
 	layers.append({'layer':Dense(nodes[2],bias_initializer=Constant(value=bias)),
 						   'advanced_activation':PReLU()})
 
-	layers.append({'layer':Dense(nodes[3],input_dim=input_dim,bias_initializer=Constant(value=bias)),
+	layers.append({'layer':Dense(nodes[3],bias_initializer=Constant(value=bias)),
 						   'advanced_activation':PReLU(),'dropout_rate':drop_ra})
 
-	layers.append({'layer':Dense(nodes[4],input_dim=input_dim,bias_initializer=Constant(value=bias)),
+	layers.append({'layer':Dense(nodes[4],bias_initializer=Constant(value=bias)),
 						   'advanced_activation':PReLU(),'dropout_rate':drop_ra})
 
 	layers.append({'layer':Dense(input_dim,kernel_regularizer=l1(l1_reg)),
@@ -101,7 +106,7 @@ def model_third(X,drop_ra=0.1,l1_reg=0.001,bias=0.1,g_noise=0.2,nodes=[32,16,5,1
 	return layers
 
 #add in batch normalisation	
-def model_fourth(X,drop_ra=0.1,l1_reg=0.001,bias=0.1,g_noise=0.2, nodes=[32,16,5,16,32]):
+def model_fourth(X,drop_ra=0.,l1_reg=0.,bias=0.1,g_noise=0., nodes=[32,16,5,16,32]):
 	#a list of layers, each comprised of a dictionary of layer elements
 	
 	input_dim=X.shape[1]
@@ -110,16 +115,16 @@ def model_fourth(X,drop_ra=0.1,l1_reg=0.001,bias=0.1,g_noise=0.2, nodes=[32,16,5
 
 	layers.append({'layer':Dense(nodes[0],input_dim=input_dim,kernel_regularizer=l1(0.)),
 						   'advanced_activation':PReLU(),'normalisation':BatchNormalization()})
-	layers.append({'layer':Dense(nodes[1],input_dim=input_dim, bias_initializer=Constant(value=bias)),
+	layers.append({'layer':Dense(nodes[1], bias_initializer=Constant(value=bias)),
 						   'advanced_activation':PReLU(), 'dropout_rate':drop_ra,'normalisation':BatchNormalization()})
 
 	layers.append({'layer':Dense(nodes[2],bias_initializer=Constant(value=bias)),
 						   'advanced_activation':PReLU()})
 
-	layers.append({'layer':Dense(nodes[3],input_dim=input_dim,bias_initializer=Constant(value=bias)),
+	layers.append({'layer':Dense(nodes[3],bias_initializer=Constant(value=bias)),
 						   'advanced_activation':PReLU(),'dropout_rate':drop_ra})
 
-	layers.append({'layer':Dense(nodes[4],input_dim=input_dim,bias_initializer=Constant(value=bias)),
+	layers.append({'layer':Dense(nodes[4],bias_initializer=Constant(value=bias)),
 						   'advanced_activation':PReLU(),'dropout_rate':drop_ra})
 
 	layers.append({'layer':Dense(input_dim,kernel_regularizer=l1(l1_reg)),
@@ -128,7 +133,7 @@ def model_fourth(X,drop_ra=0.1,l1_reg=0.001,bias=0.1,g_noise=0.2, nodes=[32,16,5
 	return layers
 	
 #try output prelu layer	
-def model_sixth(X,drop_ra=0.1,l1_reg=0.001,bias=0.1,g_noise=0.2,nodes=[32,16,5,16,32]):
+def model_sixth(X,drop_ra=0.,l1_reg=0.,bias=0.1,g_noise=0.,nodes=[32,16,5,16,32]):
 	#a list of layers, each comprised of a dictionary of layer elements
 	#K.clear_session()
 	input_dim=X.shape[1]
@@ -138,16 +143,16 @@ def model_sixth(X,drop_ra=0.1,l1_reg=0.001,bias=0.1,g_noise=0.2,nodes=[32,16,5,1
 	layers.append({'layer':Dense(nodes[0],input_dim=input_dim,kernel_regularizer=l1(0.),
 							bias_initializer=Constant(value=bias)), 'advanced_activation':PReLU(),
 						   })
-	layers.append({'layer':Dense(nodes[1],input_dim=input_dim, bias_initializer=Constant(value=bias)),
+	layers.append({'layer':Dense(nodes[1], bias_initializer=Constant(value=bias)),
 						   'advanced_activation':PReLU(), 'dropout_rate':drop_ra,'normalisation':BatchNormalization()})
 
 	layers.append({'layer':Dense(nodes[2],bias_initializer=Constant(value=bias)),
 						   'advanced_activation':PReLU()})
 
-	layers.append({'layer':Dense(nodes[3],input_dim=input_dim,bias_initializer=Constant(value=bias)),
+	layers.append({'layer':Dense(nodes[3],bias_initializer=Constant(value=bias)),
 						   'advanced_activation':PReLU(),'dropout_rate':drop_ra})
 
-	layers.append({'layer':Dense(nodes[4],input_dim=input_dim,bias_initializer=Constant(value=bias)),
+	layers.append({'layer':Dense(nodes[4],bias_initializer=Constant(value=bias)),
 						   'advanced_activation':PReLU(),'dropout_rate':drop_ra})
 
 	layers.append({'layer':Dense(input_dim,kernel_regularizer=l1(l1_reg),bias_initializer=Constant(value=bias)),
@@ -156,7 +161,7 @@ def model_sixth(X,drop_ra=0.1,l1_reg=0.001,bias=0.1,g_noise=0.2,nodes=[32,16,5,1
 	return layers
 
 #try gaussian noise layers in encoder	
-def model_seventh(X,drop_ra=0.1,l1_reg=0.001,bias=0.1,g_noise=0.2,nodes=[32,16,5,16,32]):
+def model_seventh(X,drop_ra=0.,l1_reg=0.,bias=0.1,g_noise=0.,nodes=[32,16,5,16,32]):
 	#a list of layers, each comprised of a dictionary of layer elements
 	#K.clear_session()
 	input_dim=X.shape[1]
@@ -167,17 +172,17 @@ def model_seventh(X,drop_ra=0.1,l1_reg=0.001,bias=0.1,g_noise=0.2,nodes=[32,16,5
 					bias_initializer=Constant(value=bias)), 'advanced_activation':PReLU(),
 						'noise':GaussianNoise(g_noise)
 						   })
-	layers.append({'layer':Dense(nodes[1],input_dim=input_dim, bias_initializer=Constant(value=bias)),
+	layers.append({'layer':Dense(nodes[1], bias_initializer=Constant(value=bias)),
 						   'advanced_activation':PReLU(), 'noise':GaussianNoise(g_noise),
 						   'dropout_rate':drop_ra,'normalisation':BatchNormalization()})
 
 	layers.append({'layer':Dense(nodes[2],bias_initializer=Constant(value=bias)),
 						   'advanced_activation':PReLU()})
 
-	layers.append({'layer':Dense(nodes[3],input_dim=input_dim,bias_initializer=Constant(value=bias)),
+	layers.append({'layer':Dense(nodes[3],bias_initializer=Constant(value=bias)),
 						   'advanced_activation':PReLU(),'dropout_rate':drop_ra})
 
-	layers.append({'layer':Dense(nodes[4],input_dim=input_dim,bias_initializer=Constant(value=bias)),
+	layers.append({'layer':Dense(nodes[4],bias_initializer=Constant(value=bias)),
 						   'advanced_activation':PReLU(),'dropout_rate':drop_ra})
 
 	layers.append({'layer':Dense(input_dim,kernel_regularizer=l1(l1_reg)),
@@ -186,7 +191,7 @@ def model_seventh(X,drop_ra=0.1,l1_reg=0.001,bias=0.1,g_noise=0.2,nodes=[32,16,5
 	return layers
 
 #try kernel initialisation	
-def model_eighth(X,drop_ra=0.1,l1_reg=0.001,bias=0.1,g_noise=0.2,ker_init=None,nodes=[32,16,5,16,32]):
+def model_eighth(X,drop_ra=0.,l1_reg=0.,bias=0.1,g_noise=0.,ker_init=None,nodes=[32,16,5,16,32]):
 	#a list of layers, each comprised of a dictionary of layer elements
 	#K.clear_session()
 	input_dim=X.shape[1]
@@ -197,7 +202,7 @@ def model_eighth(X,drop_ra=0.1,l1_reg=0.001,bias=0.1,g_noise=0.2,ker_init=None,n
 					bias_initializer=Constant(value=bias)), 'advanced_activation':PReLU(),
 						'noise':GaussianNoise(g_noise)
 						   })
-	layers.append({'layer':Dense(nodes[1],input_dim=input_dim, kernel_initializer=ker_init,
+	layers.append({'layer':Dense(nodes[1], kernel_initializer=ker_init,
 							bias_initializer=Constant(value=bias)),
 						   'advanced_activation':PReLU(), 'noise':GaussianNoise(g_noise),
 						   'dropout_rate':drop_ra,'normalisation':BatchNormalization()})
@@ -205,10 +210,10 @@ def model_eighth(X,drop_ra=0.1,l1_reg=0.001,bias=0.1,g_noise=0.2,ker_init=None,n
 	layers.append({'layer':Dense(nodes[2],bias_initializer=Constant(value=bias),kernel_initializer=ker_init),
 						   'advanced_activation':PReLU()})
 
-	layers.append({'layer':Dense(nodes[3],input_dim=input_dim,bias_initializer=Constant(value=bias),kernel_initializer=ker_init),
+	layers.append({'layer':Dense(nodes[3],bias_initializer=Constant(value=bias),kernel_initializer=ker_init),
 						   'advanced_activation':PReLU(),'dropout_rate':drop_ra})
 
-	layers.append({'layer':Dense(nodes[4],input_dim=input_dim,bias_initializer=Constant(value=bias),
+	layers.append({'layer':Dense(nodes[4],bias_initializer=Constant(value=bias),
 							kernel_initializer=ker_init),
 						   'advanced_activation':PReLU(),'dropout_rate':drop_ra})
 
@@ -217,7 +222,7 @@ def model_eighth(X,drop_ra=0.1,l1_reg=0.001,bias=0.1,g_noise=0.2,ker_init=None,n
 	return layers
 
 #try ELU activation function	
-def model_ninth(X,drop_ra=0.7,l1_reg=0.001,bias=0.1,g_noise=0.2,nodes=[32,16,5,16,32]):
+def model_ninth(X,drop_ra=0.,l1_reg=0.,bias=0.,g_noise=0.,nodes=[32,16,5,16,32]):
 	#a list of layers, each comprised of a dictionary of layer elements
 	#K.clear_session()
 	input_dim=X.shape[1]
@@ -226,16 +231,16 @@ def model_ninth(X,drop_ra=0.7,l1_reg=0.001,bias=0.1,g_noise=0.2,nodes=[32,16,5,1
 
 	layers.append({'layer':Dense(nodes[0],input_dim=input_dim,kernel_regularizer=l1(0.))
 						   })
-	layers.append({'layer':Dense(nodes[1],input_dim=input_dim, bias_initializer=Constant(value=bias)),
+	layers.append({'layer':Dense(nodes[1], bias_initializer=Constant(value=bias)),
 						   'advanced_activation':ELU()})
 
 	layers.append({'layer':Dense(nodes[2]),
 						   'advanced_activation':ELU()})
 
-	layers.append({'layer':Dense(nodes[3],input_dim=input_dim,bias_initializer=Constant(value=bias)),
+	layers.append({'layer':Dense(nodes[3],bias_initializer=Constant(value=bias)),
 						   'advanced_activation':ELU()})
 
-	layers.append({'layer':Dense(nodes[4],input_dim=input_dim,bias_initializer=Constant(value=bias)),
+	layers.append({'layer':Dense(nodes[4],bias_initializer=Constant(value=bias)),
 						   'advanced_activation':ELU()})
 
 	layers.append({'layer':Dense(input_dim,kernel_regularizer=l1(l1_reg)),
@@ -243,7 +248,7 @@ def model_ninth(X,drop_ra=0.7,l1_reg=0.001,bias=0.1,g_noise=0.2,nodes=[32,16,5,1
 
 	return layers
 	
-def model_tenth(X,drop_ra=0.1,l1_reg=0.001,bias=0.1,g_noise=0.2,ker_init=None,nodes=[32,16,5,16,32]):
+def model_tenth(X,drop_ra=0.,l1_reg=0.,bias=0.,g_noise=0.,ker_init=None,nodes=[32,16,5,16,32]):
 	#a list of layers, each comprised of a dictionary of layer elements
 	#K.clear_session()
 	input_dim=X.shape[1]
@@ -254,7 +259,7 @@ def model_tenth(X,drop_ra=0.1,l1_reg=0.001,bias=0.1,g_noise=0.2,ker_init=None,no
 					bias_initializer=Constant(value=bias)), 'advanced_activation':PReLU(),
 						'noise':GaussianNoise(g_noise)
 						   })
-	layers.append({'layer':Dense(nodes[1],input_dim=input_dim, kernel_initializer=ker_init,
+	layers.append({'layer':Dense(nodes[1], kernel_initializer=ker_init,
 							bias_initializer=Constant(value=bias)),
 						   'advanced_activation':PReLU(), 'noise':GaussianNoise(g_noise),
 						   'dropout_rate':drop_ra,'normalisation':BatchNormalization()})
@@ -262,10 +267,10 @@ def model_tenth(X,drop_ra=0.1,l1_reg=0.001,bias=0.1,g_noise=0.2,ker_init=None,no
 	layers.append({'layer':MaxoutDense(nodes[2],init=ker_init)
 						   })
 
-	layers.append({'layer':Dense(nodes[3],input_dim=input_dim,bias_initializer=Constant(value=bias),kernel_initializer=ker_init),
+	layers.append({'layer':Dense(nodes[3],bias_initializer=Constant(value=bias),kernel_initializer=ker_init),
 						   'advanced_activation':PReLU(),'dropout_rate':drop_ra})
 
-	layers.append({'layer':Dense(nodes[4],input_dim=input_dim,bias_initializer=Constant(value=bias),
+	layers.append({'layer':Dense(nodes[4],bias_initializer=Constant(value=bias),
 							kernel_initializer=ker_init),
 						   'advanced_activation':PReLU(),'dropout_rate':drop_ra})
 
