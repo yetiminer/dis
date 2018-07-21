@@ -18,13 +18,15 @@ import pandas as pd
 import os
 
 
-def model_3h(X,drop_ra=0.1,l1_reg=0.001,bias=0.1,g_noise=0.2,ker_init=None,nodes=[32,16,5,16,32]):
+def model_3h(X,drop_ra=0.0,l1_reg=0.0,bias=0.1,g_noise=0.,ker_init=None,nodes=[32,16,32]):
 	#a list of layers, each comprised of a dictionary of layer elements
 	#K.clear_session()
 	input_dim=X.shape[1]
 
 	layers=[]
-
+	
+	layers.append({'layer':Dropout(drop_ra,input_shape=(input_dim,))})
+	
 	layers.append({'layer':Dense(nodes[0],input_dim=input_dim,kernel_initializer=ker_init,
 					bias_initializer=Constant(value=bias)), 'advanced_activation':PReLU(),
 						'noise':GaussianNoise(g_noise),'dropout_rate':drop_ra,'normalisation':BatchNormalization()
@@ -46,7 +48,7 @@ def model_3h(X,drop_ra=0.1,l1_reg=0.001,bias=0.1,g_noise=0.2,ker_init=None,nodes
 
 
 
-def model_5h(X,drop_ra=0.1,l1_reg=0.001,bias=0.1,g_noise=0.2,ker_init=None,nodes=[32,16,5,16,32]):
+def model_5h(X,drop_ra=0.0,l1_reg=0.0,bias=0.1,g_noise=0.0,ker_init=None,nodes=[32,16,5,16,32]):
 	#a list of layers, each comprised of a dictionary of layer elements
 	#K.clear_session()
 	input_dim=X.shape[1]
@@ -55,7 +57,7 @@ def model_5h(X,drop_ra=0.1,l1_reg=0.001,bias=0.1,g_noise=0.2,ker_init=None,nodes
 
 	layers.append({'layer':Dense(nodes[0],input_dim=input_dim,kernel_initializer=ker_init,
 					bias_initializer=Constant(value=bias)), 'advanced_activation':PReLU(),
-						'noise':GaussianNoise(g_noise)
+						'noise':GaussianNoise(g_noise),'normalisation':BatchNormalization()
 						   })
 	layers.append({'layer':Dense(nodes[1], kernel_initializer=ker_init,
 							bias_initializer=Constant(value=bias)),
@@ -77,7 +79,7 @@ def model_5h(X,drop_ra=0.1,l1_reg=0.001,bias=0.1,g_noise=0.2,ker_init=None,nodes
 	return layers
 	
 
-def model_7h(X,drop_ra=0.1,l1_reg=0.001,bias=0.1,g_noise=0.2,ker_init=None,nodes=[32,16,8,4,8,16,32]):
+def model_7h(X,drop_ra=0.0,l1_reg=0.0,bias=0.1,g_noise=0.0,ker_init=None,nodes=[32,16,8,4,8,16,32]):
 	#a list of layers, each comprised of a dictionary of layer elements
 	#K.clear_session()
 	input_dim=X.shape[1]
@@ -88,12 +90,12 @@ def model_7h(X,drop_ra=0.1,l1_reg=0.001,bias=0.1,g_noise=0.2,ker_init=None,nodes
 					bias_initializer=Constant(value=bias)), 'advanced_activation':PReLU(),
 						'noise':GaussianNoise(g_noise)
 						   })
-	layers.append({'layer':Dense(nodes[1],input_dim=input_dim, kernel_initializer=ker_init,
+	layers.append({'layer':Dense(nodes[1], kernel_initializer=ker_init,
 							bias_initializer=Constant(value=bias)),
 						   'advanced_activation':PReLU(), 'noise':GaussianNoise(g_noise),
 						   'dropout_rate':drop_ra,'normalisation':BatchNormalization()})
 	
-	layers.append({'layer':Dense(nodes[2],input_dim=input_dim, kernel_initializer=ker_init,
+	layers.append({'layer':Dense(nodes[2], kernel_initializer=ker_init,
 							bias_initializer=Constant(value=bias)),
 						   'advanced_activation':PReLU(), 'noise':GaussianNoise(g_noise),
 						   'dropout_rate':drop_ra,'normalisation':BatchNormalization()})
@@ -101,13 +103,13 @@ def model_7h(X,drop_ra=0.1,l1_reg=0.001,bias=0.1,g_noise=0.2,ker_init=None,nodes
 	layers.append({'layer':Dense(nodes[3],bias_initializer=Constant(value=bias),kernel_initializer=ker_init),
 						   'advanced_activation':PReLU()})
 
-	layers.append({'layer':Dense(nodes[4],input_dim=input_dim,bias_initializer=Constant(value=bias),kernel_initializer=ker_init),
+	layers.append({'layer':Dense(nodes[4],bias_initializer=Constant(value=bias),kernel_initializer=ker_init),
 						   'advanced_activation':PReLU(),'dropout_rate':drop_ra})
 
-	layers.append({'layer':Dense(nodes[5],input_dim=input_dim,bias_initializer=Constant(value=bias),kernel_initializer=ker_init),
+	layers.append({'layer':Dense(nodes[5],bias_initializer=Constant(value=bias),kernel_initializer=ker_init),
 						   'advanced_activation':PReLU(),'dropout_rate':drop_ra})						   
 						   
-	layers.append({'layer':Dense(nodes[6],input_dim=input_dim,bias_initializer=Constant(value=bias),
+	layers.append({'layer':Dense(nodes[6],bias_initializer=Constant(value=bias),
 							kernel_initializer=ker_init),
 						   'advanced_activation':PReLU(),'dropout_rate':drop_ra})
 
