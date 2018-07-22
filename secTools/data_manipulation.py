@@ -24,18 +24,22 @@ def split_data_X_Y(df,cols):
 
 	return X,Y, cols
 
-def remove_outlier(X,level_x,Y=None,level_y=None,replace_nan=True,replace_with=0):
+def remove_outlier(X,level_x,Y=None,y_thresh=False,level_y=None,replace_nan=True,replace_with=0):
     
-	if Y is None:
-	
+	if ~y_thresh:
+
 		X[np.abs(X)>level_x]=np.nan
 		
 		if replace_nan:
 			X[np.isnan(X)]=replace_with
 			assert(~np.any(np.isnan(X)))
-			
-		return X
-	
+		
+		tf=np.sum(X!=0,axis=1)>0
+		X=X[tf]
+		Y=Y[tf]
+		
+		return X,Y
+
 	else:
 		print(Y.shape,'Y shape before threshhold cut')
 
@@ -52,14 +56,19 @@ def remove_outlier(X,level_x,Y=None,level_y=None,replace_nan=True,replace_with=0
 			Y[np.isnan(Y)]=replace_with
 			assert(~np.any(np.isnan(X)))
 			assert(~np.any(np.isnan(Y)))
-
+			
+		#get rid of all zero rows
+		tf=np.sum(X!=0,axis=1)>0
+		X=X[tf]
+		Y=Y[tf]
+		print(Y.shape, 'Y shape after zero rows removed')
 		return X,Y
 		
 
 
 
 
-def augment_x(x_train,ds,repeats=2,fit_col='Assets',seed=22):
+def augment_x(x_train,ds,repeats=2,fit_col='Assets',seed=22,cutoff=2.5):
 	#augments data with random multiplactive constant on all present value columns
 	#distribution of this constant is that of the eg Assets column (which is assets growth)
 
@@ -78,7 +87,7 @@ def augment_x(x_train,ds,repeats=2,fit_col='Assets',seed=22):
 	scale_rand=kde.sample([number], seed)
 
 	x_train_aug[:,aug_mask]*scale_rand
-	x_train[np.abs(x_train)>2.5]=0
+	x_train[np.abs(x_train)>cutoff]=0
 	return x_train_aug
 	
 
@@ -93,7 +102,7 @@ def unique_pairs(arr):
 
     return np.array(pairs)
 	
-def new_datapoint(sample_pairs,x_train,pairs=False):    
+def new_datapoint(sample_pairs,x_train,pairs=False,cutoff=2.5):    
 	#pick set at random
 	num_pairs=len(sample_pairs)
 
@@ -119,7 +128,7 @@ def new_datapoint(sample_pairs,x_train,pairs=False):
 
 		out=np.matmul(weight_vec,x_train[match_set])
 
-	out[np.abs(out)>2.5]=0
+	out[np.abs(out)>cutoff]=0
 	return out
 #add random linear combination of remaining financials 
 #normalise
