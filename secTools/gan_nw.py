@@ -14,6 +14,7 @@ from keras import backend as K
 from keras import regularizers
 from keras.callbacks import EarlyStopping
 
+from custom_loss import sparse_recon_loss_mse
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -70,7 +71,7 @@ def generator_nw(**kwargs):
 				
 	Generator=Model([X_in,Y_in],out_dec)
 	Generator.summary()
-	Generator.compile(optimizer='adam',loss=recon_loss)
+	Generator.compile(optimizer='adam',loss=sparse_recon_loss_mse)
 	return Generator
 	
 def discriminator_nw(**kwargs):
@@ -119,7 +120,7 @@ def gan_nw(Generator,Discriminator,**kwargs):
 	GAN=Model([gan_input,gan_inputy],[gan_gen_out,gan_output])
 
 	GAN.summary()
-	gan_loss=[recon_loss,K.binary_crossentropy]
+	gan_loss=[sparse_recon_loss_mse,binary_crossentropy]
 	#gan_loss_weights=[1E2,1]
 
 	GAN.compile(optimizer='adam',loss=gan_loss)
@@ -181,3 +182,5 @@ def generator_nw_unet(**kwargs):
 	Generator.summary()
 	Generator.compile(optimizer='adam',loss=recon_loss)
 	return Generator
+	
+	
