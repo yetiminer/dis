@@ -21,12 +21,13 @@ def split_data_X_Y(df,cols):
 	cols=cols[cols_tf]
 	X=data[cols].values
 	Y=data[Y_feature].values
+	idx=data[Y_feature].index.values
 
-	return X,Y, cols
+	return X,Y,idx, cols
 
 def remove_outlier(X,level_x,Y=None,y_thresh=False,level_y=None,replace_nan=True,replace_with=0):
     
-	if ~y_thresh:
+	if y_thresh:
 
 		X[np.abs(X)>level_x]=np.nan
 		
