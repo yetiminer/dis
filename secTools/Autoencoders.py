@@ -40,7 +40,7 @@ class autoencoder(object):
 	def __init__(self,layers,name=None,train_data=[],test_data=[],
 		batch_size=128,epochs=50,loss=sparse_recon_loss_mse, 
 		metrics=[sparse_recon_loss_abs,sparse_recon_loss_mse],
-		optimizer='adam',compile=True,early_stop=None):
+		optimizer='adam',compile=True,early_stop=None,sequential=True):
 		
 		self.layers=layers
 		self.name=name
@@ -53,7 +53,10 @@ class autoencoder(object):
 		self.metrics=metrics
 		self.optimizer=optimizer
 		
-		self.model=self.build_model(layers=self.layers,inplace=False) #explicitly show that self.model is being set
+		if sequential:
+			self.model=self.build_model(layers=self.layers,inplace=False) #explicitly show that self.model is being set
+		else:
+			self.model=layers
 		
 		# define early stopping callback
 		if early_stop is None:
