@@ -14,6 +14,12 @@ def make_trainable(net, val):
 		
 def plot_loss(losses,**kwargs):
 		losses_temp=losses.copy()
+		
+		if 'loss_weights' in kwargs:
+			loss_weights=kwargs['loss_weights']
+		else:
+			loss_weights=[1,1]
+		
 		try:
 			for l in losses_temp:
 				losses_temp[l]=np.array(losses[l])
@@ -35,8 +41,8 @@ def plot_loss(losses,**kwargs):
 		#ax1.set_yscale('log')        
 		
 		ax2=fig.add_subplot(312)
-		ax2.plot(losses_temp["g"][:,1], label='Reconstruction loss')
-		ax2.plot(losses_temp["g"][:,2], label='Detection loss')
+		ax2.plot(loss_weights[:,0]*losses_temp["g"][:,1], label='Reconstruction loss')
+		ax2.plot(loss_weights[:,1]*losses_temp["g"][:,2], label='Detection loss')
 		ax2.legend()
 		
 		
@@ -50,9 +56,9 @@ def plot_loss(losses,**kwargs):
 		if 'scale_control' in kwargs:
 			scale=kwargs['scale_control']
 			
-			ax1.set_ylim(scale)
-			ax2.set_ylim(scale)
-			ax3.set_ylim(scale)
+			ax1.set_ylim(scale[0])
+			ax2.set_ylim(scale[1])
+			ax3.set_ylim(scale[2])
 		
 		plt.show()
 
@@ -98,34 +104,41 @@ def make_label_vector(batch_size,mono=False):
         
         return y			
 			
-def make_batch_mono(x_train,y_train,batch_size,real=True):
-        
-        
-        # Make generative images
-        trainidx = np.random.randint(0,x_train.shape[0],size=batch_size)
-        real_image_batch_x = x_train[trainidx]
-        real_image_batch_y=y_train[trainidx]
-        
-        
-        trainidx = np.random.randint(0,x_train.shape[0],size=batch_size)
-        gen_feed_batch_x=x_train[trainidx]
-		##### here is where we ask the generator to exaggerate y coordinate.
-        gen_feed_batch_y=np.multiply(y_train[trainidx],np.random.uniform(0.7,3,size=(batch_size,1))) 
-        #,np.random.uniform(1,3,size=batch_size))
-        if real:
-            return real_image_batch_x,real_image_batch_y
-        else:
-            return gen_feed_batch_x, gen_feed_batch_y
+def make_batch_mono(x_train,y_train,batch_size,real=True,y_cond=None):
+
+
+    # Make generative images
+    trainidx = np.random.randint(0,x_train.shape[0],size=batch_size)
+    real_image_batch_x = x_train[trainidx]
+    real_image_batch_y=y_train[trainidx]
+
+    if y_cond is not None: #return the conditional information if required
+        real_image_batch_y_cond=y_cond[trainidx]
+    else:
+        real_image_batch_y_cond=None
+
+
+    trainidx = np.random.randint(0,x_train.shape[0],size=batch_size)
+    gen_feed_batch_x=x_train[trainidx]
+    ##### here is where we ask the generator to exaggerate y coordinate.
+    gen_feed_batch_y=np.multiply(y_train[trainidx],np.random.uniform(0.7,3,size=(batch_size,1))) 
+    #,np.random.uniform(1,3,size=batch_size))
+    if real:
+        return real_image_batch_x,real_image_batch_y, real_image_batch_y_cond
+    else:
+        return gen_feed_batch_x, gen_feed_batch_y, real_image_batch_y_cond
 
 			
 			
-def make_label_vector_mono(batch_size,real=True):
+def make_label_vector_mono(batch_size,real=True,real_smoothing=None):
 	y = np.zeros([batch_size,2])
 
 	if real:
 	#for when generator is being trained, want discriminator to label everything real
 
 		y[:,1] = 1 #second column=1 implies image is genuine
+		if real_smoothing is not None:
+			y[:,1]=np.random.binomial(1,real_smoothing,size=(batch_size))
 		
 	else:
 		y = np.zeros([batch_size,2])
@@ -203,7 +216,7 @@ def train_for_n(**kwargs):
 		
 	return losses
 		
-def Discrim_pre_train(x_train,y_train,Discrim,train_size=1000):
+def Discrim_pre_train(x_train,y_train,Discrim,train_size=1000,y_cond=None):
 
 	#initate Discriminator network
 
@@ -214,8 +227,13 @@ def Discrim_pre_train(x_train,y_train,Discrim,train_size=1000):
 	trainidx = random.sample(range(0,n), ntrain)
 	XT = x_train[trainidx]
 	YT=y_train[trainidx]
-
-	XT_aug=np.concatenate((XT,YT),axis=1)
+	
+	if y_cond is not None:
+		YT_cond=y_cond[trainidx]
+		XT_aug=np.concatenate((XT,YT,YT_cond),axis=1)
+	
+	else:
+		XT_aug=np.concatenate((XT,YT),axis=1)
 
 
 	#generate some 'fake' financials
@@ -245,10 +263,29 @@ def Discrim_pre_train(x_train,y_train,Discrim,train_size=1000):
 	
 def train_for_n_mono(**kwargs):
 	
+	
+	
 	x_train=kwargs['x_train']
 	y_train=kwargs['y_train']
+	
+	if 'y_train_cond' in kwargs:
+		y_train_cond=kwargs['y_train_cond']
+	else:
+		y_train_cond=None
+	
 	x_test=kwargs['x_test']
 	y_test=kwargs['y_test']
+	
+	if 'y_test_cond' in kwargs:
+		y_test_cond=kwargs['y_test_cond']
+	else:
+		y_test_cond=None
+	
+	real_smoothing=None	
+	if 'real_smoothing' in kwargs:
+		real_smoothing=kwargs['real_smoothing']
+
+	
 	nb_epoch=kwargs['nb_epoch']
 	plt_frq=kwargs['plt_frq']
 	batch_size=kwargs['batch_size']
@@ -257,20 +294,52 @@ def train_for_n_mono(**kwargs):
 	Discriminator=kwargs['Discriminator']
 	GAN=kwargs['GAN']
 	plot=kwargs['plot']
-
+	
+	cond=False
+	if 'cond' in kwargs:
+		cond=kwargs['cond']
 
 	losses = {"d":[], "g":[],"t":[]} 
-
+	out_dic={}
+	
+	if 'weight_change' in kwargs:
+	#if I want to dynamically change weights in the GAN I need to compile inside the function
+		weight_change=kwargs['weight_change']
+		
+		alpha = kwargs['alpha']
+		beta = 1
+		gan_compile_dic=kwargs['gan_compile_dic']
+		
+		
+		out_dic['weight_hist']=[]
+		GAN.compile(**gan_compile_dic,loss_weights=[alpha,beta])
+		
+	else:
+		weight_change=False
+	
+	
+	
 	for e in tqdm(range(nb_epoch)):  
 		
+		if e%100==0 & weight_change: GAN.compile(**gan_compile_dic,loss_weights=[alpha,beta])
+		
+		
 		#decide whether we ask to draw real or generated images
-		real=e%2
+		real=e%2==0
 		if real:
-			real_image_batch_x,real_image_batch_y=make_batch_mono(x_train,y_train,batch_size,real=real)
-			X=np.concatenate((real_image_batch_x,real_image_batch_y),axis=1)
-			y = make_label_vector_mono(batch_size,real=real)
+			real_image_batch_x,real_image_batch_y,real_image_batch_y_cond=make_batch_mono(x_train,
+				y_train,batch_size,real=real,y_cond=y_train_cond)
+			
+			if cond:
+				
+				X=np.concatenate((real_image_batch_y_cond,real_image_batch_y),axis=1)
+			else:
+				X=np.concatenate((real_image_batch_x,real_image_batch_y),axis=1)
+			
+			y = make_label_vector_mono(batch_size,real=real,real_smoothing=real_smoothing)
 		else:
-			gen_feed_batch_x,gen_feed_batch_y=make_batch_mono(x_train,y_train,batch_size,real)
+			gen_feed_batch_x,gen_feed_batch_y,_=make_batch_mono(x_train,
+				y_train,batch_size,real=real)
 			
 			generated_images = Generator.predict([gen_feed_batch_x,gen_feed_batch_y])
 			X=generated_images
@@ -279,19 +348,36 @@ def train_for_n_mono(**kwargs):
 		# Train discriminator on generated images
 				
 		make_trainable(Discriminator,True)
-		d_loss  = Discriminator.train_on_batch(X,y)
+		
+		if cond: #when the GAN is conditional, give the discriminator the previous financials
+			
+			if real:
+				discrim_in=np.concatenate((X,real_image_batch_x),axis=1)
+			else:
+				discrim_in=np.concatenate((X,gen_feed_batch_x),axis=1)
+			
+			d_loss = Discriminator.train_on_batch(discrim_in,y)
+		else: 
+			d_loss  = Discriminator.train_on_batch(X,y)
+		
+		
 		losses["d"].append(d_loss)
 		
 
 		# train Generator-Discriminator stack on input noise to non-generated output class
-		gan_feed_batch_x, gan_feed_batch_y=make_batch(x_train,y_train,batch_size,real=False)               
+		gan_feed_batch_x, gan_feed_batch_y,gan_feed_batch_y_cond=make_batch_mono(x_train,
+			y_train,batch_size,real=False,y_cond=y_train_cond)               
 		#deliberately mislabel 
 		y2=make_label_vector_mono(batch_size,real=True)
 		
 		#freeze the coefficients on the discrim network for GAN/Generator training
 		make_trainable(Discriminator,False)
 		
-		GAN_image_concat=np.concatenate((gan_feed_batch_x,gan_feed_batch_y),axis=1)
+		if cond: 
+			GAN_image_concat=np.concatenate((gan_feed_batch_y_cond,gan_feed_batch_y),axis=1)
+		else:
+			GAN_image_concat=np.concatenate((gan_feed_batch_x,gan_feed_batch_y),axis=1)
+			
 		g_loss = GAN.train_on_batch([gan_feed_batch_x,gan_feed_batch_y], [GAN_image_concat,y2] )
 		losses["g"].append(g_loss)
 		
@@ -301,18 +387,59 @@ def train_for_n_mono(**kwargs):
 		
 		################
 		# Validation data
-		Tgen_feed_x, Tgen_feed_y, Treal_image_x,Treal_image_y=make_batch(x_test,y_test,test_size)               
-		Tgenerated_images = Generator.predict([Tgen_feed_x,Tgen_feed_y])        
-		Ty = make_label_vector(test_size)
-		Treal_image_concat=np.concatenate((Treal_image_x,Treal_image_y),axis=1)
-		TX=np.concatenate((Treal_image_concat,Tgenerated_images))
-		test_loss=Discriminator.evaluate(TX,Ty)
 		
+		if cond:
+			Tgen_feed_x, Tgen_feed_y, Tgen_feed_y_cond=make_batch_mono(x_test,
+				y_test,test_size,real=False,y_cond=y_test_cond)
+			
+			Tgenerated_images = Generator.predict([Tgen_feed_x,Tgen_feed_y]) 
+			
+			Ty_fake=make_label_vector_mono(test_size,real=False)
+			
+			TX_fake=np.concatenate((Tgenerated_images,Tgen_feed_x),axis=1)
+			test_loss_fake=Discriminator.evaluate(TX_fake,Ty_fake)
+			
+			Treal_image_x,Treal_image_y, Treal_image_y_cond=make_batch_mono(x_test,
+				y_test,test_size,real=True,y_cond=y_test_cond)
+			
+			Ty_real=make_label_vector_mono(test_size,real=True)
+			Treal_image_concat=np.concatenate((Treal_image_y_cond,Treal_image_y),axis=1)
+			
+			TX_real=np.concatenate((Treal_image_concat,Treal_image_x),axis=1)
+			
+			test_loss_real=Discriminator.evaluate(TX_real,Ty_real)
+			
+			test_loss=(test_loss_real+test_loss_fake)/2
+			losses['t'].append([test_loss,test_loss_real,test_loss_fake])
+			
+			
+			
+		else:
+			Tgen_feed_x, Tgen_feed_y, Treal_image_x,Treal_image_y=make_batch(x_test,y_test,test_size)               
+			Tgenerated_images = Generator.predict([Tgen_feed_x,Tgen_feed_y])        
+			Ty = make_label_vector(test_size)
+			Treal_image_concat=np.concatenate((Treal_image_x,Treal_image_y),axis=1)
+			TX=np.concatenate((Treal_image_concat,Tgenerated_images))
+			test_loss=Discriminator.evaluate(TX,Ty)
+					
+			test_loss_real=Discriminator.evaluate(Treal_image_concat,Ty[0:test_size,:])
+			test_loss_fake=Discriminator.evaluate(Tgenerated_images,Ty[-test_size:,:])
+			
+			losses['t'].append([test_loss,test_loss_real,test_loss_fake])
 		
-		
-		test_loss_real=Discriminator.evaluate(Treal_image_concat,Ty[0:test_size,:])
-		test_loss_fake=Discriminator.evaluate(Tgenerated_images,Ty[-test_size:,:])
-		
-		losses['t'].append([test_loss,test_loss_real,test_loss_fake])
-		
-	return losses
+		##change loss weights
+		if weight_change:
+			 alpha = alpha + 0.01
+	
+		out_dic['weight_hist'].append(GAN.loss_weights)
+    
+	out_dic['weight_hist']=np.array(out_dic['weight_hist'])
+	out_dic['losses']=turn_into_array_dic(losses)
+	
+	return out_dic
+	
+def turn_into_array_dic(dic):
+    od={}
+    for k,li in dic.items():
+        od[k]=np.array(li)
+    return od
