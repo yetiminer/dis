@@ -25,9 +25,9 @@ def split_data_X_Y(df,cols):
 
 	return X,Y,idx, cols
 
-def remove_outlier(X,level_x,Y=None,y_thresh=False,level_y=None,replace_nan=True,replace_with=0):
+def remove_outlier(X,level_x,idx,Y=None,y_thresh=False,level_y=None,replace_nan=True,replace_with=0):
     
-	if y_thresh:
+	if ~y_thresh:
 
 		X[np.abs(X)>level_x]=np.nan
 		
@@ -35,11 +35,17 @@ def remove_outlier(X,level_x,Y=None,y_thresh=False,level_y=None,replace_nan=True
 			X[np.isnan(X)]=replace_with
 			assert(~np.any(np.isnan(X)))
 		
+		#get rid of all zero rows
 		tf=np.sum(X!=0,axis=1)>0
-		X=X[tf]
-		Y=Y[tf]
 		
-		return X,Y
+		X=X[tf]		
+		idx=idx[tf]		
+		
+		if Y is not None:
+			Y=Y[tf]
+			return X,Y,idx
+		else:
+			return X,Y				
 
 	else:
 		print(Y.shape,'Y shape before threshhold cut')
@@ -62,8 +68,10 @@ def remove_outlier(X,level_x,Y=None,y_thresh=False,level_y=None,replace_nan=True
 		tf=np.sum(X!=0,axis=1)>0
 		X=X[tf]
 		Y=Y[tf]
+		idx=idx[tf]
 		print(Y.shape, 'Y shape after zero rows removed')
-		return X,Y
+				
+		return X,Y,idx
 		
 
 
@@ -90,7 +98,28 @@ def augment_x(x_train,ds,repeats=2,fit_col='Assets',seed=22,cutoff=2.5):
 	x_train_aug[:,aug_mask]*scale_rand
 	x_train[np.abs(x_train)>cutoff]=0
 	return x_train_aug
-	
+
+def augment_x_df(x_train,df,repeats=2,fit_col='Assets',seed=22,cutoff=2.5,col_num=200):
+	#augments data with random multiplactive constant on all present value columns
+	#distribution of this constant is that of the eg Assets column (which is assets growth)
+
+	aug_mask=list(map(lambda x: x[0]!='p',df.columns[0:col_num]))
+
+	ker_fit_data=df[fit_col].values
+	ker_fit_data=ker_fit_data[(ker_fit_data>0.5)*(ker_fit_data<1.5)]
+	ker_fit_data=ker_fit_data.reshape(-1,1)
+
+	kde = KernelDensity(kernel='gaussian', bandwidth=0.05).fit(ker_fit_data)
+	x_train_aug=np.repeat(x_train,repeats,axis=0)
+
+	number=x_train_aug.shape[0]
+	seed=22
+	scale_rand=kde.sample([number], seed)
+
+	x_train_aug[:,aug_mask]*scale_rand
+	x_train[np.abs(x_train)>cutoff]=0
+	return x_train_aug	
+
 
 def unique_pairs(arr):
     uview = np.ascontiguousarray(arr).view(np.dtype((np.void, arr.dtype.itemsize * arr.shape[1])))

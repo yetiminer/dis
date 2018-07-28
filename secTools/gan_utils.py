@@ -214,7 +214,10 @@ def train_for_n(**kwargs):
 		
 		losses['t'].append([test_loss,test_loss_real,test_loss_fake])
 		
-	return losses
+	out_dic={}
+	out_dic['losses']=losses
+	
+	return out_dic
 		
 def Discrim_pre_train(x_train,y_train,Discrim,train_size=1000,y_cond=None):
 
@@ -301,6 +304,7 @@ def train_for_n_mono(**kwargs):
 
 	losses = {"d":[], "g":[],"t":[]} 
 	out_dic={}
+	out_dic['weight_hist']=[]
 	
 	if 'weight_change' in kwargs:
 	#if I want to dynamically change weights in the GAN I need to compile inside the function
@@ -311,17 +315,20 @@ def train_for_n_mono(**kwargs):
 		gan_compile_dic=kwargs['gan_compile_dic']
 		
 		
-		out_dic['weight_hist']=[]
+		
 		GAN.compile(**gan_compile_dic,loss_weights=[alpha,beta])
 		
 	else:
 		weight_change=False
+		
 	
 	
 	
 	for e in tqdm(range(nb_epoch)):  
 		
-		if e%100==0 & weight_change: GAN.compile(**gan_compile_dic,loss_weights=[alpha,beta])
+		#If I want to change weights I need to recompile, tried defining weights with tensors but didn't work
+		if e%100==0 and weight_change: 
+			GAN.compile(**gan_compile_dic,loss_weights=[alpha,beta])
 		
 		
 		#decide whether we ask to draw real or generated images
