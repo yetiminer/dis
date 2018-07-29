@@ -68,6 +68,7 @@ def generator_nw(x_train,
 
 
 	Generator=Model(inpu,out_dec)
+	Generator.name='Generator'
 	Generator.summary()
 
 	#if compile:
@@ -102,6 +103,8 @@ def discriminator_nw(x_train,g_noise=0.00,nodes=[64,16,64],y=False,prelu_bias=0.
 	out_dec=Dense(2,activation='softmax')(h2_dis)
 
 	Discriminator=Model(inputs=X_candidate,outputs=out_dec)
+	Discriminator.name='Discrim'
+	
 	Discriminator.summary()
 
 	#if compile:
@@ -115,8 +118,8 @@ def gan_nw(Generator,Discriminator,x_train):
 	input_dim=x_train.shape[1]
 	#build gan model
 	make_trainable(Discriminator,False)
-	gan_input=Input(shape=(input_dim,))
-	gan_inputy=Input(shape=(1,))
+	gan_input=Input(shape=(input_dim,),name='Input_FS')
+	gan_inputy=Input(shape=(1,),name='Target_Revenue')
 
 	gan_gen_out=Generator([gan_input,gan_inputy])
 	

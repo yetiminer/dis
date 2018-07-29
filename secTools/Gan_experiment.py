@@ -104,7 +104,7 @@ def GAN_nw_standard(augment=False,gen_pre_train=True,gen_weights=None,discrim_pr
 		pre_x_train=np.concatenate((x_train,y_train),axis=1)
 		pre_x_test=np.concatenate((x_test,y_test),axis=1)
 		ES=EarlyStopping(monitor='val_loss', min_delta=0.0001, patience=5, verbose=1, mode='auto')
-		pre_train_ae.fit([x_train,y_train],pre_x_train,validation_data=([x_test,y_test], pre_x_test),epochs=50,batch_size=128,callbacks=[ES])	
+		pre_train_ae.fit([x_train,y_train],pre_x_train,validation_data=([x_test,y_test], pre_x_test),**train_dic,callbacks=[ES])	
 
 		gen_weights=pre_train_ae.get_weights()
 
@@ -127,7 +127,7 @@ def GAN_nw_standard(augment=False,gen_pre_train=True,gen_weights=None,discrim_pr
 	
 	dis_layer_dic['ker_init']=ker_init
 	
-	dis_compile_dic={'loss':binary_crossentropy,'optimizer':Adam(lr=0.001)} #'early_stop':ES}
+	dis_compile_dic={'loss':binary_crossentropy,'metrics':['binary_accuracy'],'optimizer':Adam(lr=0.001)} #'early_stop':ES}
 	
 	Discrim=discriminator_nw(x_train,**dis_layer_dic)
 	Discrim.compile(**dis_compile_dic)
@@ -180,12 +180,9 @@ def GAN_nw_standard(augment=False,gen_pre_train=True,gen_weights=None,discrim_pr
 	'Discrim':Discrim,'Generator':Generator,'pre_gen_weights':gen_weights}	
 	#output pretty picture
 	
-	try:
-		fig=plot_loss(results['losses'],**{'scale_control':[[0,3],[0,3],[0,2]],'loss_weights':results['weight_hist']})
-		out_dic['loss_fig']=fig
-	except:
-		print('graphing error')
-		pass
+	
+	fig=plot_loss(results['losses'],**{'scale_control':[[0,3],[0,3],[0,2],[-0.1,1.1]],'loss_weights':results['weight_hist']})
+	out_dic['loss_fig']=fig
 
 	
 	return out_dic
