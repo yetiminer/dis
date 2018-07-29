@@ -95,7 +95,7 @@ def discriminator_nw(x_train,g_noise=0.00,nodes=[64,16,64],y=False,prelu_bias=0.
 	h1_dis=PReLU(name='dH1_activation',alpha_initializer=Constant(value=prelu_bias))(h1_dis)
 
 	h2_dis=Dropout(drop_ra,name='dH2_dropout')(h1_dis)
-	h2_dis=GaussianNoise(g_noise,name='dH2_noise')(h2_dis)
+	#h2_dis=GaussianNoise(g_noise,name='dH2_noise')(h2_dis)
 	h2_dis=Dense(fd2)(h2_dis)
 	h2_dis=PReLU(name='dH2_activation',alpha_initializer=Constant(value=prelu_bias))(h2_dis)
 

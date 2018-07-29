@@ -266,8 +266,7 @@ def Discrim_pre_train(x_train,y_train,Discrim,train_size=1000,y_cond=None):
 	
 def train_for_n_mono(**kwargs):
 	
-	
-	
+		
 	x_train=kwargs['x_train']
 	y_train=kwargs['y_train']
 	
@@ -301,37 +300,38 @@ def train_for_n_mono(**kwargs):
 	cond=False
 	if 'cond' in kwargs:
 		cond=kwargs['cond']
-
+	
+	#setup variables for results
 	losses = {"d":[], "g":[],"t":[]} 
 	out_dic={}
 	out_dic['weight_hist']=[]
 	
+	compile_freq=100
 	if 'weight_change' in kwargs:
 	#if I want to dynamically change weights in the GAN I need to compile inside the function
 		weight_change=kwargs['weight_change']
 		
 		alpha = kwargs['alpha']
-		beta = 1
-		gan_compile_dic=kwargs['gan_compile_dic']
-		
-		
-		
+		beta = kwargs['beta']
+		gan_compile_dic=kwargs['gan_compile_dic']		
 		GAN.compile(**gan_compile_dic,loss_weights=[alpha,beta])
+		
+		
+		if compile_freq in kwargs:
+			compile_freq=kwargs['compile_freq']
 		
 	else:
 		weight_change=False
-		
-	
-	
+			
 	
 	for e in tqdm(range(nb_epoch)):  
 		
 		#If I want to change weights I need to recompile, tried defining weights with tensors but didn't work
-		if e%100==0 and weight_change: 
-			GAN.compile(**gan_compile_dic,loss_weights=[alpha,beta])
+		if e%compile_freq==0 and weight_change: 
+			GAN.compile(**gan_compile_dic,loss_weights=[alpha[e],beta[e]])
 		
 		
-		#decide whether we ask to draw real or generated images
+		#decide whether we ask to draw real or generated images - alternates on odd even epochs
 		real=e%2==0
 		if real:
 			real_image_batch_x,real_image_batch_y,real_image_batch_y_cond=make_batch_mono(x_train,
@@ -417,28 +417,53 @@ def train_for_n_mono(**kwargs):
 			test_loss_real=Discriminator.evaluate(TX_real,Ty_real)
 			
 			test_loss=(test_loss_real+test_loss_fake)/2
-			losses['t'].append([test_loss,test_loss_real,test_loss_fake])
-			
-			
+			losses['t'].append([test_loss,test_loss_real,test_loss_fake])		
 			
 		else:
-			Tgen_feed_x, Tgen_feed_y, Treal_image_x,Treal_image_y=make_batch(x_test,y_test,test_size)               
-			Tgenerated_images = Generator.predict([Tgen_feed_x,Tgen_feed_y])        
-			Ty = make_label_vector(test_size)
-			Treal_image_concat=np.concatenate((Treal_image_x,Treal_image_y),axis=1)
-			TX=np.concatenate((Treal_image_concat,Tgenerated_images))
-			test_loss=Discriminator.evaluate(TX,Ty)
-					
-			test_loss_real=Discriminator.evaluate(Treal_image_concat,Ty[0:test_size,:])
-			test_loss_fake=Discriminator.evaluate(Tgenerated_images,Ty[-test_size:,:])
+
 			
+			#get a batch of real images, and target perturbations
+			Tgen_feed_x, Tgen_feed_y=make_batch_mono(x_test,
+				y_test,test_size,real=False)
+			
+			#put them through the generator
+			TX_fake= Generator.predict([Tgen_feed_x,Tgen_feed_y]) 			
+			
+			#make correct labels
+			Ty_fake=make_label_vector_mono(test_size,real=False)					
+			
+			#give to the discriminator
+			test_loss_fake=Discriminator.evaluate(TX_fake,Ty_fake)
+			
+			#get a batch of real images
+			TX_real,Treal_image_y=make_batch_mono(x_test,
+				y_test,test_size,real=True)
+				
+			#make correct labels
+			Ty_real=make_label_vector_mono(test_size,real=True)
+			
+			#feed to the discriminator
+			test_loss_real=Discriminator.evaluate(TX_real,Ty_real)
+			
+			test_loss=(test_loss_real+test_loss_fake)/2
 			losses['t'].append([test_loss,test_loss_real,test_loss_fake])
 		
-		##change loss weights
-		if weight_change:
-			 alpha = alpha + 0.01
-	
-		out_dic['weight_hist'].append(GAN.loss_weights)
+		
+			# Tgen_feed_x, Tgen_feed_y, Treal_image_x,Treal_image_y=make_batch(x_test,y_test,test_size)               
+			# Tgenerated_images = Generator.predict([Tgen_feed_x,Tgen_feed_y])        
+			# Ty = make_label_vector(test_size)
+			# Treal_image_concat=np.concatenate((Treal_image_x,Treal_image_y),axis=1)
+			# TX=np.concatenate((Treal_image_concat,Tgenerated_images))
+			# test_loss=Discriminator.evaluate(TX,Ty)
+					
+			# test_loss_real=Discriminator.evaluate(Treal_image_concat,Ty[0:test_size,:])
+			# test_loss_fake=Discriminator.evaluate(Tgenerated_images,Ty[-test_size:,:])
+			
+			# losses['t'].append([test_loss,test_loss_real,test_loss_fake])
+		
+
+		
+			out_dic['weight_hist'].append(GAN.loss_weights)
     
 	out_dic['weight_hist']=np.array(out_dic['weight_hist'])
 	out_dic['losses']=turn_into_array_dic(losses)

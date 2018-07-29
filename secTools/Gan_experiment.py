@@ -24,12 +24,17 @@ from data_manipulation import remove_outlier, augment_x_linear,augment_x,split_d
 from sklearn.model_selection import train_test_split
 from keras.optimizers import Adam
 from keras.initializers import glorot_normal
-
-from gan_nw_2 import generator_nw,discriminator_nw,gan_nw
 from gan_utils import Discrim_pre_train, train_for_n, plot_loss, train_for_n_mono
 
+#import the networks
+from gan_nw_2 import generator_nw,discriminator_nw,gan_nw,generator_nw_5,discriminator_nw_4,cond_gan_nw
+
+
 def GAN_nw_standard(augment=False,gen_pre_train=True,gen_weights=None,discrim_pre_train=True,mono_train=True,
-					pre_train_dic=None,gen_layer_dic=None,dis_layer_dic=None,loss_weights=None,gan_train_dic=None):
+					pre_train_dic=None,gen_layer_dic=None,dis_layer_dic=None,loss_weights=None,gan_train_dic=None,
+					generator_name='generator_nw',discriminator_name='discriminator_nw',GAN_name='gan_nw',
+					weight_change=False,weight_change_dic=None):
+	
 	#gather the data
 	ds_dic={'pickle_file':'ds180704'}
 	ds=ds_from_db(**ds_dic)
@@ -63,17 +68,23 @@ def GAN_nw_standard(augment=False,gen_pre_train=True,gen_weights=None,discrim_pr
 		x_train=x_train_aug[:,0:199]
 		y_train=x_train_aug[:,-1].reshape((x_train.shape[0],1))				
 	
+	print('Training set size ',x_train.shape[0])
+	print('Test set size ',x_test.shape[0])
+	
 	#define loss functions
 	sparse_recon_loss_combi=make_sparse_recon_loss_combi(0.8)
 	sparse_recon_loss_var=make_sparse_recon_loss_var(sparse_recon_loss_combi)
 
 	loss=sparse_recon_loss_combi
-
-	metrics=[sparse_recon_loss_mse,sparse_recon_loss_abs,sparse_recon_loss_var]
-
-	
+	metrics=[sparse_recon_loss_mse,sparse_recon_loss_abs,sparse_recon_loss_var]	
 	ES=EarlyStopping(monitor='sparse_recon_loss_combi_loss', min_delta=0.0001, patience=5, verbose=1, mode='auto')
 
+	#load the network types:
+	nw_dic=define_network_dictionary()
+	generator_nw=nw_dic['generator'][generator_name]
+	discriminator_nw=nw_dic['discriminator'][discriminator_name]
+	gan_nw=nw_dic['GAN'][GAN_name]
+	
 	#define general NW initiation parameters
 	if pre_train_dic is None:
 		train_dic={'epochs':100,'batch_size':128}			
@@ -141,6 +152,19 @@ def GAN_nw_standard(augment=False,gen_pre_train=True,gen_weights=None,discrim_pr
 	train_dic={'x_train':x_train,'y_train':y_train,'x_test':x_test,'y_test':y_test,
 			'Generator':Generator,
 			'Discriminator':Discrim,'GAN':GAN,'plot':False}
+	
+	#if weights are to be changed during training, the GAN should re-recompiled ocassionally
+	if weight_change and mono_train:
+		del gan_compile_dic['loss_weights']
+		print(gan_compile_dic)
+		if weight_change_dic is None:
+		#alpha and beta are the weights over training epochs.
+		#compile freq is how often the gan is recompiled. Too often and training becomes very slow
+			weight_change_dic={'weight_change':True,'alpha':np.linspace(loss_weights[0],10,gan_train_dic['nb_epoch']),
+			'beta':np.ones(gan_train_dic['nb_epoch']),'compile_freq':100}
+			
+		weight_change_dic={**weight_change_dic,**{'gan_compile_dic':gan_compile_dic}}		
+		train_dic={**train_dic,**gan_train_dic,**weight_change_dic}
 		
 	train_dic={**train_dic,**gan_train_dic}
 	
@@ -152,10 +176,25 @@ def GAN_nw_standard(augment=False,gen_pre_train=True,gen_weights=None,discrim_pr
 		results=train_for_n(**train_dic)
 		results['weight_hist']=np.array(loss_weights).reshape((1,2))
 
+	out_dic={'out_dic':results,'GAN':GAN,
+	'Discrim':Discrim,'Generator':Generator,'pre_gen_weights':gen_weights}	
 	#output pretty picture
-	fig=plot_loss(results['losses'],**{'scale_control':[[0,3],[0,3],[0,2]],'loss_weights':results['weight_hist']})
 	
-	out_dic={'out_dic':results,'loss_fig':fig,'GAN':GAN,
-	'Discrim':Discrim,'Generator':Generator,'pre_gen_weights':gen_weights}
+	try:
+		fig=plot_loss(results['losses'],**{'scale_control':[[0,3],[0,3],[0,2]],'loss_weights':results['weight_hist']})
+		out_dic['loss_fig']=fig
+	except:
+		print('graphing error')
+		pass
+
 	
 	return out_dic
+
+
+	
+def define_network_dictionary():
+	generator_nw_dic={'generator_nw':generator_nw,'generator_nw_5':generator_nw_5}
+	discriminator_nw_dic={'discriminator_nw':discriminator_nw,'discriminator_nw_4':discriminator_nw_4}
+	GAN_nw_dic={'gan_nw':gan_nw,'cond_gan_nw':cond_gan_nw}
+	nw_dic={'generator':generator_nw_dic,'discriminator':discriminator_nw_dic,'GAN':GAN_nw_dic}
+	return nw_dic
