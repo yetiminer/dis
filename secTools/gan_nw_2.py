@@ -77,14 +77,14 @@ def generator_nw(x_train,
 
 	return Generator
 	
-def discriminator_nw(x_train,g_noise=0.00,nodes=[64,16,64],y=False,prelu_bias=0.1,drop_ra=0.0,ker_init=None,compile=True):
+def discriminator_nw(x_train,g_noise=0.00,nodes=[64,16],y=False,prelu_bias=0.1,drop_ra=0.0,ker_init=None,compile=True):
 	###Discriminator
 
 	#Discriminator params
 	n_x=x_train.shape[1]
 	fd1=nodes[0]
 	fd2=nodes[1]
-	fd3=nodes[2]
+	
 
 
 	#image encoder layers

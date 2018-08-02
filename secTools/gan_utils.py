@@ -16,86 +16,90 @@ def make_trainable(net, val):
 		
 def plot_loss(losses,loss_weights=[1,1],title='GAN training and validation',
               scale=None,plot_which=[True,True,True,True],figsize=None):
-    losses_temp=losses.copy()
+	losses_temp=losses.copy()
 
 
-    try:
-        for l in losses_temp:
-            losses_temp[l]=np.array(losses[l])
-    except ValueError:
-        print(l)
-        print(losses[l])
+	try:
+		for l in losses_temp:
+			losses_temp[l]=np.array(losses[l])
+	except ValueError:
+		print(l)
+		print(losses[l])
 
-        raise
+		raise
 
-    alpha=0.7
-    #display.clear_output(wait=True)
-    #display.display(plt.gcf())
-    if figsize is None:
-        figsize=(12,4*sum(plot_which))
-        
-    fig=plt.figure(figsize=(figsize))
+	alpha=0.7
+	#display.clear_output(wait=True)
+	#display.display(plt.gcf())
+	if figsize is None:
+		figsize=(12,4*sum(plot_which))
+		
+	fig=plt.figure(figsize=(figsize))
 
-    fig.suptitle(title)
+	fig.suptitle(title)
 
-    plot_num=sum(plot_which)*100+11
+	plot_num=sum(plot_which)*100+11
 
-    if plot_which[0]:
-        ax1=fig.add_subplot(plot_num)
-        #plt.figure(figsize=(12,8))
-        ax1.plot(losses_temp["d"][:,0], label='discriminator loss',alpha=alpha)
+	if plot_which[0]:
+		ax1=fig.add_subplot(plot_num)
+		#plt.figure(figsize=(12,8))
+		ax1.plot(losses_temp["d"][:,0], label='discriminator loss',alpha=alpha)
 
-        ax1.plot(losses_temp["g"][:,0], label='generator loss',alpha=alpha)
-        ax1.plot(losses_temp["d"][:,1], label='discriminator accuracy',alpha=alpha)
-        ax1.plot(losses_temp["g"][:,2], label='generator GAN_loss',alpha=alpha)
+		ax1.plot(losses_temp["g"][:,0], label='generator loss',alpha=alpha)
+		ax1.plot(losses_temp["d"][:,1], label='discriminator accuracy',alpha=alpha)
+		ax1.plot(losses_temp["g"][:,2], label='generator GAN_loss',alpha=alpha)
 
-        ax1.set_title('Panel 1: Training History')
-        ax1.legend()
-        plot_num+=1
-    #ax1.set_yscale('log')        
+		ax1.set_title('Panel 1: Training History')
+		ax1.set_ylabel('Loss')
+		ax1.legend()
+		plot_num+=1
+	#ax1.set_yscale('log')        
 
-    if plot_which[1]:
-        ax2=fig.add_subplot(plot_num)
-        ax2.plot(loss_weights[:,0]*losses_temp["g"][:,1], label='weighted_Reconstruction loss',alpha=alpha)
-        ax2.plot(loss_weights[:,1]*losses_temp["g"][:,2], label='Detection loss',alpha=alpha)
-        ax2.plot(loss_weights[:,0]*losses_temp["t_gan"][:,1], label='val_weighted_Reconstruction loss',alpha=alpha*0.7)
-        ax2.plot(loss_weights[:,1]*losses_temp["t_gan"][:,2], label='val_Detection loss',alpha=alpha)
-        ax2.legend()
-        ax2.set_title('Panel 2: Generator Error')
-        plot_num+=1
+	if plot_which[1]:
+		ax2=fig.add_subplot(plot_num)
+		ax2.plot(loss_weights[:,0]*losses_temp["g"][:,1], label='weighted_Reconstruction loss',alpha=alpha)
+		ax2.plot(loss_weights[:,1]*losses_temp["g"][:,2], label='Detection loss',alpha=alpha)
+		ax2.plot(loss_weights[:,0]*losses_temp["t_gan"][:,1], label='val_weighted_Reconstruction loss',alpha=alpha*0.7)
+		ax2.plot(loss_weights[:,1]*losses_temp["t_gan"][:,2], label='val_Detection loss',alpha=alpha)
+		ax2.legend()
+		ax2.set_title('Panel 2: Generator Error')
+		ax2.set_ylabel('Loss')
+		plot_num+=1
 
-    if plot_which[2]:
-        ax3=fig.add_subplot(plot_num)
-        ax3.plot(losses_temp["t"][:,0], label='Test Discriminator loss',alpha=alpha)
-        ax3.plot(losses_temp["t"][:,1], label='Test Discrim Real loss',alpha=alpha)
-        ax3.plot(losses_temp["t"][:,2], label='Test Discrim Fake loss',alpha=alpha)
-        ax3.legend()
-        ax3.set_title('Panel 3: Discriminator Validation Error')
-        ax3.set_ylim(0,2)
-        plot_num+=1
+	if plot_which[2]:
+		ax3=fig.add_subplot(plot_num)
+		ax3.plot(losses_temp["t"][:,0], label='Test Discriminator loss',alpha=alpha)
+		ax3.plot(losses_temp["t"][:,1], label='Test Discrim Real loss',alpha=alpha)
+		ax3.plot(losses_temp["t"][:,2], label='Test Discrim Fake loss',alpha=alpha)
+		ax3.legend()
+		ax3.set_title('Panel 3: Discriminator Validation Error')
+		ax3.set_ylim(0,2)
+		ax3.set_ylabel('Loss')
+		plot_num+=1
 
-    if plot_which[3]:
-        ax4=fig.add_subplot(plot_num)
-        ax4.plot(losses_temp["t_ac"][:,0], label='Test Discriminator Accuracy',alpha=alpha)
-        ax4.plot(losses_temp["t_ac"][:,1], label='Test Discrim Real Accuracy',alpha=alpha)
-        ax4.plot(losses_temp["t_ac"][:,2], label='Test Discrim Fake Accuracy',alpha=alpha)
-        ax4.legend()
-        ax4.set_ylim(0,2)
-        ax3.set_title('Panel 4: Discriminator Validation Accuracy')
-        ax4.set_xlabel('GAN epoch')
-        plot_num+=1
+	if plot_which[3]:
+		ax4=fig.add_subplot(plot_num)
+		ax4.plot(losses_temp["t_ac"][:,0], label='Test Discriminator Accuracy',alpha=alpha)
+		ax4.plot(losses_temp["t_ac"][:,1], label='Test Discrim Real Accuracy',alpha=alpha)
+		ax4.plot(losses_temp["t_ac"][:,2], label='Test Discrim Fake Accuracy',alpha=alpha)
+		ax4.legend()
+		ax4.set_ylim(0,2)
+		ax4.set_title('Panel 4: Discriminator Validation Accuracy')
+		ax4.set_xlabel('GAN epoch')
+		ax4.set_ylabel('Accuracy')
+		plot_num+=1
 
-    if scale is not None:
+	if scale is not None:
 
-        z=list(fig.axes)
-        for ax,sc in zip(z,scale[0:len(z)]):
-            try:
-                ax.set_ylim(sc)
-            except:
-                pass
-  
+		z=list(fig.axes)
+		for ax,sc in zip(z,scale[0:len(z)]):
+			try:
+				ax.set_ylim(sc)
+			except:
+				pass
 
-    return fig
+
+	return fig
 
 def recon_loss(y_true, y_pred):
     mask_value=0

@@ -35,6 +35,13 @@ def GAN_nw_standard(augment=False,gen_pre_train=True,gen_weights=None,discrim_pr
 					generator_name='generator_nw',discriminator_name='discriminator_nw',GAN_name='gan_nw',
 					weight_change=False,weight_change_dic=None):
 	
+	#attempt reproducibility
+	from numpy.random import seed
+	seed(35)
+	from tensorflow import set_random_seed
+	set_random_seed(35)
+	
+	
 	#gather the data
 	ds_dic={'pickle_file':'ds180704'}
 	ds=ds_from_db(**ds_dic)
@@ -101,6 +108,8 @@ def GAN_nw_standard(augment=False,gen_pre_train=True,gen_weights=None,discrim_pr
 	
 	
 	#initalise generator network for as autoencoder for pretraining
+	#ae_loss=np.zeros((1+len(metrics),1))
+	ae_loss=np.full(1+len(metrics), np.nan)
 	if gen_pre_train:
 		pre_gen_compile_dic={'loss':loss,'metrics':metrics,'optimizer':Adam(lr=0.001)}
 		pre_train_ae=generator_nw(x_train,**layer_p_dic,y=True)
@@ -111,6 +120,7 @@ def GAN_nw_standard(augment=False,gen_pre_train=True,gen_weights=None,discrim_pr
 		pre_train_ae.fit([x_train,y_train],pre_x_train,validation_data=([x_test,y_test], pre_x_test),**pre_train_dic,callbacks=[ES])	
 
 		gen_weights=pre_train_ae.get_weights()
+		ae_loss=pre_train_ae.evaluate(x=[x_test,y_test], y=pre_x_test)
 
 
 	
@@ -125,7 +135,7 @@ def GAN_nw_standard(augment=False,gen_pre_train=True,gen_weights=None,discrim_pr
 
 	#intialise Discriminator NW
 	if dis_layer_dic is None:
-		dis_layer_dic={'drop_ra':0.0, 'g_noise':0.00,'nodes':[64,32,16]}		
+		dis_layer_dic={'drop_ra':0.0, 'g_noise':0.00,'nodes':[64,32]}		
 	
 	dis_layer_dic['ker_init']=ker_init
 	
@@ -177,7 +187,10 @@ def GAN_nw_standard(augment=False,gen_pre_train=True,gen_weights=None,discrim_pr
 	else:
 		results=train_for_n(**train_dic,idx_test=idx_test)
 		#results['weight_hist']=np.array(loss_weights).reshape((1,2))
-
+	
+	#add in the AE pre train loss
+	results['AE_pre_train']=ae_loss	
+		
 	out_dic={'out_dic':results,'GAN':GAN,
 	'Discrim':Discrim,'Generator':Generator,'pre_gen_weights':gen_weights}	
 	#output pretty picture
@@ -185,8 +198,10 @@ def GAN_nw_standard(augment=False,gen_pre_train=True,gen_weights=None,discrim_pr
 	
 	fig=plot_loss(results['losses'],**{'scale':[[0,3],[0,3],[0,2],[-0.1,1.1]],'loss_weights':results['weight_hist']})
 	out_dic['loss_fig']=fig
-
+	
+	#create df og history
 	out_dic['df']=create_df(out_dic)
+
 	
 	return out_dic
 
@@ -225,7 +240,7 @@ import yaml
 from keras.utils import plot_model
 from keras import Model
 
-def save_results(out_dic,location=None):
+def save_results(out_dic,gan_dic,location=None):
     
 	if location is None:
 		location=os.getcwd()
@@ -270,22 +285,59 @@ def save_results(out_dic,location=None):
 	df_loc=os.path.join(folder_path,'hist_df_'+str(uid)+'.csv')
 	out_dic['df'].to_csv(df_loc)
 	
+	#create summary df
+	record_num=str(uid)
+	out_dic['final_results_df']=create_final_df(out_dic,record_num)
+	record_df=gf(gan_dic,record_num).merge(pd.DataFrame.transpose(out_dic['final_results_df']),left_index=True,right_index=True)
+	record_df.index.name='Exp'
+	out_dic['record_df']=record_df
+	
+	df_loc=os.path.join(folder_path,'record_df_'+str(uid)+'.csv')
+	out_dic['record_df'].to_csv(df_loc)
+	
+	return out_dic
+	
+	
+def update_central_results(out_dic,central_location=None,name='central_results.csv'):
+	if central_location is None:
+		central_location=os.getcwd()
+		central_location=os.path.join(central_location,'gan_results',name)
+	
+	record_df=out_dic['record_df']
+	
+	#load directory of results
+	try:
+		
+		central_df=pd.read_csv(central_location,header=[0,1],index_col=0)
+		
+		#append new_results
+	
+		central_df=central_df.append(record_df)
+	except FileNotFoundError:
+		print('No existing result sumary table, creating new one')
+		central_df=record_df
+	
+	#save updated results ledger
+	central_df.to_csv(central_location)
+	return central_df
+	
+	
 def create_final_df(out_dic,num):
     results=out_dic['out_dic']
     df_dic={}
-    df_dic['GAN_loss_val']=pd.DataFrame(results['final_eval']['gan_test_loss'],
+    df_dic['GAN loss val']=pd.DataFrame(results['final_eval']['gan_test_loss'],
                                         index=['val Gan loss','val reconstruction','val detection error'])
 
-    df_dic['Discrim_acc_val']=pd.DataFrame(results['final_eval']['test_loss_fake'],
+    df_dic['Discrim acc val']=pd.DataFrame(results['final_eval']['test_loss_fake'],
                                           index=['val fake binary cross entropy','val fake accuracy'])
-    df_dic['Discrim_loss_val']=pd.DataFrame(results['final_eval']['test_loss_real'],
+    df_dic['Discrim loss val']=pd.DataFrame(results['final_eval']['test_loss_real'],
                                             index=['val real binary cross entropy','val real accuracy'])
                                                             
-    df_dic['AE_loss']=pd.DataFrame(results['final_eval']['gen_test_loss'],
+    df_dic['AE loss']=pd.DataFrame(results['final_eval']['gen_test_loss'],
                                    index=['val AE Sparse loss','val AE mse','val AE abs','val AE var'])
-    df_dic['Loss_weights']=pd.DataFrame(results['weight_hist'][-1,:],
+    df_dic['Loss weights Final']=pd.DataFrame(results['weight_hist'][-1,:],
                                         index=['Reconstruction weight','BCE weight'])
-    #df_dic['Parameters']=pd.DataFrame.from_dict(gan_dic)
+    df_dic['AE PreTrain']=pd.DataFrame(results['AE_pre_train'],index=['val AE Sparse loss','val AE mse','val AE abs','val AE var'])
     
     df=pd.concat(df_dic,axis=0)
     df=df.rename(columns={0:num})
