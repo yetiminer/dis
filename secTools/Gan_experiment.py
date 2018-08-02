@@ -248,7 +248,7 @@ def save_results(out_dic,gan_dic,location=None):
 
 	#create uid based on config file
 	uid=uuid.uuid3(uuid.NAMESPACE_DNS,str(gan_dic))
-
+	print(uid)
 	new_folder='Exp_'+str(uid)
 	new_folder=os.path.join(location,new_folder)
 
@@ -316,6 +316,9 @@ def update_central_results(out_dic,central_location=None,name='central_results.c
 	except FileNotFoundError:
 		print('No existing result sumary table, creating new one')
 		central_df=record_df
+	
+	#only using glorot normalisation here
+	central_df.loc[:,('gen_layer_dic','ker_init')]='Glorot Normal'
 	
 	#save updated results ledger
 	central_df.to_csv(central_location)

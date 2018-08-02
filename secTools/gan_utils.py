@@ -237,11 +237,12 @@ def train_for_n(**kwargs):
 		gen_epoch=kwargs['discrim_epoch']
 	
 	compile_freq=100
-	weight_change=False
+	#weight_change=False
+	print(weight_change)
 	if 'weight_change' in kwargs:
 	#if I want to dynamically change weights in the GAN I need to compile inside the function
 		weight_change=kwargs['weight_change']
-		
+		print(weight_change, 'hello')
 		alpha = kwargs['alpha']
 		beta = kwargs['beta']
 		gan_compile_dic=kwargs['gan_compile_dic']		
@@ -264,6 +265,7 @@ def train_for_n(**kwargs):
 		
 		#If I want to change weights I need to recompile, tried defining weights with tensors but didn't work
 		if e%compile_freq==0 and weight_change: 
+			print('recompile for weights')
 			GAN.compile(**gan_compile_dic,loss_weights=[alpha[e],beta[e]])	
 		
 		for k in range(e,e+discrim_epoch):
