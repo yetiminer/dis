@@ -100,6 +100,34 @@ def plot_loss(losses,loss_weights=[1,1],title='GAN training and validation',
 
 
 	return fig
+	
+def ae_plot(out_dic,title='AE log reconstruction Error, Variance',sc=[-3.5,-1]):
+	results=out_dic['out_dic']
+	fig=plt.figure(figsize=(10,5))
+	ax1=fig.add_subplot(111)
+	ax1.plot(np.log(results['losses']['g'][:,1]),label='Gen AE loss',alpha=0.5)
+	ax1.plot(np.log(results['losses']['t_gen'][:,0]),label='Gen Val AE loss',alpha=0.8)
+	ax1.plot(np.log(results['losses']['t_gen'][:,3]),label='Gen Val Var loss',alpha=0.5)
+	ax1.set_ylim([-4,0.2])
+
+	fig.suptitle(title)
+	ax1.set_xlabel('GAN Epoch')
+	ax1.set_ylabel('log error')
+
+	ae_pre=np.log(results['AE_pre_train'])
+	ae_post=np.log(results['final_eval']['gen_test_loss'])
+
+	ax1.plot(0,ae_pre[0],'ro',label='AE pre-train loss')
+	ax1.plot(0,ae_pre[3],'rx',label='AE pre-train var')
+	
+	coord=results['losses']['g'].shape[0]+1
+	
+	ax1.plot(coord,ae_post[0],'bo',label='AE val loss')
+	ax1.plot(coord,ae_post[3],'bx',label='AE val var')
+
+	ax1.legend()
+	ax1.set_ylim(sc)
+	return fig
 
 def recon_loss(y_true, y_pred):
     mask_value=0
@@ -237,12 +265,12 @@ def train_for_n(**kwargs):
 		gen_epoch=kwargs['discrim_epoch']
 	
 	compile_freq=100
-	#weight_change=False
-	print(weight_change)
+	weight_change=False
+	
 	if 'weight_change' in kwargs:
 	#if I want to dynamically change weights in the GAN I need to compile inside the function
 		weight_change=kwargs['weight_change']
-		print(weight_change, 'hello')
+		print('weight_change activated')
 		alpha = kwargs['alpha']
 		beta = kwargs['beta']
 		gan_compile_dic=kwargs['gan_compile_dic']		
@@ -265,11 +293,11 @@ def train_for_n(**kwargs):
 		
 		#If I want to change weights I need to recompile, tried defining weights with tensors but didn't work
 		if e%compile_freq==0 and weight_change: 
-			print('recompile for weights')
+			print('recompile for loss weights')
 			GAN.compile(**gan_compile_dic,loss_weights=[alpha[e],beta[e]])	
 		
 		for k in range(e,e+discrim_epoch):
-			#decide whether we ask to draw real or generated images - alternates on odd even epochs
+			
 			
 			real=True
 			real_image_batch_x,real_image_batch_y,real_image_batch_y_cond=make_batch_mono(x_train,

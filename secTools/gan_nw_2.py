@@ -225,7 +225,7 @@ def generator_nw_5(x_train,
 
 	return Generator
 	
-def discriminator_nw_4(x_train,g_noise=0.00,nodes=[64,32,16,8],y=False,prelu_bias=0.1,drop_ra=0.0,ker_init=None,compile=True):
+def discriminator_nw_3(x_train,g_noise=0.00,nodes=[64,32,16],y=False,prelu_bias=0.1,drop_ra=0.0,ker_init=None,compile=True):
 	###Discriminator
 
 	#Discriminator params
@@ -233,7 +233,7 @@ def discriminator_nw_4(x_train,g_noise=0.00,nodes=[64,32,16,8],y=False,prelu_bia
 	fd1=nodes[0]
 	fd2=nodes[1]
 	fd3=nodes[2]
-	fd3=nodes[3]
+
 
 	#image encoder layers
 	X_candidate=Input(shape=(n_x+1,),name='X_RealorFake')

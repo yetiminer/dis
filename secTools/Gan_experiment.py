@@ -27,8 +27,9 @@ from keras.initializers import glorot_normal
 from gan_utils import Discrim_pre_train, train_for_n, plot_loss, train_for_n_mono
 
 #import the networks
-from gan_nw_2 import generator_nw,discriminator_nw,gan_nw,generator_nw_5,discriminator_nw_4,cond_gan_nw
+from gan_nw_2 import generator_nw,discriminator_nw,gan_nw,generator_nw_5,discriminator_nw_3,cond_gan_nw
 
+from textwrap import wrap
 
 def GAN_nw_standard(augment=False,gen_pre_train=True,gen_weights=None,discrim_pre_train=True,mono_train=True,
 					pre_train_dic=None,gen_layer_dic=None,dis_layer_dic=None,loss_weights=None,gan_train_dic=None,
@@ -166,7 +167,7 @@ def GAN_nw_standard(augment=False,gen_pre_train=True,gen_weights=None,discrim_pr
 			'Discriminator':Discrim,'GAN':GAN,'plot':False}
 	
 	#if weights are to be changed during training, the GAN should re-recompiled ocassionally
-	if weight_change and mono_train:
+	if weight_change:
 		del gan_compile_dic['loss_weights']
 		print(gan_compile_dic)
 		if weight_change_dic is None:
@@ -212,7 +213,7 @@ def GAN_nw_standard(augment=False,gen_pre_train=True,gen_weights=None,discrim_pr
 	
 def define_network_dictionary():
 	generator_nw_dic={'generator_nw':generator_nw,'generator_nw_5':generator_nw_5}
-	discriminator_nw_dic={'discriminator_nw':discriminator_nw,'discriminator_nw_4':discriminator_nw_4}
+	discriminator_nw_dic={'discriminator_nw':discriminator_nw,'discriminator_nw_3':discriminator_nw_3}
 	GAN_nw_dic={'gan_nw':gan_nw,'cond_gan_nw':cond_gan_nw}
 	nw_dic={'generator':generator_nw_dic,'discriminator':discriminator_nw_dic,'GAN':GAN_nw_dic}
 	return nw_dic
@@ -264,8 +265,12 @@ def save_results(out_dic,gan_dic,location=None):
 	#save figures
 	for k,fig in out_dic.items():
 		if isinstance(fig,plt.Figure):
+			
 			title=fig._suptitle.get_text()
-			fig._suptitle.set_text(title+ ' exp uID:' + str(uid))
+
+				
+			
+			fig._suptitle.set_text("\n".join(wrap(title+ ' exp uID:' + str(uid), 60)))
 			fig_loc=os.path.join(folder_path,k+str(uid)+'.png')
 			fig.savefig(fig_loc)
 
