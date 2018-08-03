@@ -27,7 +27,8 @@ from keras.initializers import glorot_normal
 from gan_utils import Discrim_pre_train, train_for_n, plot_loss, train_for_n_mono
 
 #import the networks
-from gan_nw_2 import generator_nw,discriminator_nw,gan_nw,generator_nw_5,discriminator_nw_3,cond_gan_nw
+from gan_nw_2 import (generator_nw,discriminator_nw,gan_nw,generator_nw_5,discriminator_nw_3,cond_gan_nw,
+						generator_nw_u,generator_nw_5_u)
 
 from textwrap import wrap
 
@@ -212,7 +213,8 @@ def GAN_nw_standard(augment=False,gen_pre_train=True,gen_weights=None,discrim_pr
 	
 	
 def define_network_dictionary():
-	generator_nw_dic={'generator_nw':generator_nw,'generator_nw_5':generator_nw_5}
+	generator_nw_dic={'generator_nw':generator_nw,'generator_nw_5':generator_nw_5,
+		'generator_nw_u':generator_nw_u,'generator_nw_5_u':generator_nw_5_u}
 	discriminator_nw_dic={'discriminator_nw':discriminator_nw,'discriminator_nw_3':discriminator_nw_3}
 	GAN_nw_dic={'gan_nw':gan_nw,'cond_gan_nw':cond_gan_nw}
 	nw_dic={'generator':generator_nw_dic,'discriminator':discriminator_nw_dic,'GAN':GAN_nw_dic}

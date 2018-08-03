@@ -288,6 +288,12 @@ def train_for_n(**kwargs):
 	out_dic={}
 	out_dic['weight_hist']=[]
 	
+	#setup variables for class size mixing
+	rand_batch_mix=False
+	if 'rand_batch_mix' in kwargs:
+		rand_batch_mix=kwargs['rand_batch_mix']
+		if rand_batch_mix:
+			print('Random mixing of class sizes in Generator training')
 	
 	for e in tqdm(range(nb_epoch)):  
 		
@@ -298,10 +304,18 @@ def train_for_n(**kwargs):
 		
 		for k in range(e,e+discrim_epoch):
 			
+			#OPtion to mix relative size of classes going into discriminator to stop naive answers
+			if rand_batch_mix:
+				real_batch_size=np.random.randint(16,2*batch_size)
+				fake_batch_size=2*batch_size-real_batch_size
+				
+			else:
+				real_batch_size=batch_size
+				fake_batch_size=batch_size
 			
 			real=True
 			real_image_batch_x,real_image_batch_y,real_image_batch_y_cond=make_batch_mono(x_train,
-				y_train,batch_size,real=real,y_cond=y_train_cond,rand_gen=rand_gen)
+				y_train,real_batch_size,real=real,y_cond=y_train_cond,rand_gen=rand_gen)
 			
 			if cond:
 				
@@ -309,15 +323,15 @@ def train_for_n(**kwargs):
 			else:
 				Xr=np.concatenate((real_image_batch_x,real_image_batch_y),axis=1)
 			
-			yr = make_label_vector_mono(batch_size,real=real,real_smoothing=real_smoothing)
+			yr = make_label_vector_mono(real_batch_size,real=real,real_smoothing=real_smoothing)
 		
 			real=False
 			gen_feed_batch_x,gen_feed_batch_y,_=make_batch_mono(x_train,
-				y_train,batch_size,real=real,rand_gen=rand_gen)
+				y_train,fake_batch_size,real=real,rand_gen=rand_gen)
 			
 			generated_images = Generator.predict([gen_feed_batch_x,gen_feed_batch_y])
 			Xf=generated_images
-			yf = make_label_vector_mono(batch_size,real=real)
+			yf = make_label_vector_mono(fake_batch_size,real=real)
 			y=np.concatenate((yr,yf),axis=0)
 			# Train discriminator on generated images
 					

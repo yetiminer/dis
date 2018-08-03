@@ -263,3 +263,132 @@ def discriminator_nw_3(x_train,g_noise=0.00,nodes=[64,32,16],y=False,prelu_bias=
 	#	Discriminator.compile(**dis_compile_dic)
 		
 	return Discriminator
+	
+def generator_nw_u(x_train,
+				 g_noise=0.00,nodes=[64,16,64],y=False,prelu_bias=0.1,drop_ra=0.0,
+				 ker_init=None,compile=True,output_dim=None):
+
+	input_dim=x_train.shape[1]
+	if output_dim is None:
+		output_dim=input_dim
+	
+	fe1=nodes[0]
+	Bottleneck_Dim=nodes[1]
+	fe3=nodes[2]
+
+	#Maybe 1 or 2 inputs:
+	if y:
+		X_in=Input(shape=(input_dim,),name='financial_cond_input')
+		Y_in=Input(shape=(1,),name='financial_manip') #this is the dimension we are manipulating
+		#concatenate the two inputs
+		concat_en=concat([X_in,Y_in])
+		inpu=[X_in,Y_in]
+	else:
+		X_in=Input(shape=(input_dim,),name='financial_cond_input')
+		concat_en=X_in
+		inpu=X_in
+
+	#image encoder layers
+	h1_en=Dropout(drop_ra,name='H1_dropout')(concat_en)
+	h1_en=GaussianNoise(g_noise,name='H1_noise')(h1_en)
+	print(fe1)
+	h1_en=Dense(fe1,kernel_initializer=ker_init,name='H1_layer')(h1_en)
+	h1_en=PReLU(name='H1_activation',alpha_initializer=Constant(value=prelu_bias))(h1_en)
+	h1_en=BatchNormalization(name='H1_batch_norm')(h1_en)
+
+	h2_en=Dropout(drop_ra,name='H2_dropout')(h1_en)
+	h2_en=GaussianNoise(g_noise,name='H12_noise')(h2_en)
+	h2_en=Dense(Bottleneck_Dim,kernel_initializer=ker_init,name='H2_layer')(h2_en)
+	h2_en=PReLU(alpha_initializer=Constant(value=prelu_bias),name='H2_activation')(h2_en)
+	Latent_space=BatchNormalization(name='H2_batch_norm')(h2_en)
+
+	h3_dec=concat([h1_en,h2_en]) #u-net
+	h3_dec=Dense(fe3,kernel_initializer=ker_init,name='H3_layer')(h3_dec)
+	h3_dec=PReLU(alpha_initializer=Constant(value=prelu_bias),name='H3_activation')(h3_dec)
+
+	out_dec=Dense(output_dim,name='Output_layer')(h3_dec)
+
+	if y:
+		out_dec=concat([out_dec,Y_in])
+
+
+
+	Generator=Model(inpu,out_dec)
+	Generator.name='Generator'
+	Generator.summary()
+
+	#if compile:
+	#	gen_compile_dic={'loss':sparse_recon_loss_mse,'metrics':metrics,'optimizer':'adam','early_stop':ES}
+	#	Generator.compile(**gen_compile_dic)
+
+	return Generator
+	
+def generator_nw_5_u(x_train,
+			 g_noise=0.00,nodes=[64,32,16,32,64],y=False,prelu_bias=0.1,drop_ra=0.0,
+			 ker_init=None,compile=True,output_dim=None):
+
+	input_dim=x_train.shape[1]
+	if output_dim is None:
+		output_dim=input_dim
+	
+	fe1=nodes[0]
+	fe2=nodes[1]
+	Bottleneck_Dim=nodes[2]
+	fe3=nodes[3]
+	fe4=nodes[4]
+
+	#Maybe 1 or 2 inputs:
+	if y:
+		X_in=Input(shape=(input_dim,),name='financial_cond_input')
+		Y_in=Input(shape=(1,),name='financial_manip') #this is the dimension we are manipulating
+		#concatenate the two inputs
+		concat_en=concat([X_in,Y_in])
+		inpu=[X_in,Y_in]
+	else:
+		X_in=Input(shape=(input_dim,),name='financial_cond_input')
+		concat_en=X_in
+		inpu=X_in
+
+	#image encoder layers
+	h1_en=Dropout(drop_ra,name='H1_dropout')(concat_en)
+	h1_en=GaussianNoise(g_noise,name='H1_noise')(h1_en)	
+	h1_en=Dense(fe1,kernel_initializer=ker_init,name='H1_layer')(h1_en)
+	h1_en=PReLU(name='H1_activation',alpha_initializer=Constant(value=prelu_bias))(h1_en)
+	h1_en=BatchNormalization(name='H1_batch_norm')(h1_en)
+	
+	h2_en=Dropout(drop_ra,name='H2_dropout')(h1_en)
+	h2_en=GaussianNoise(g_noise,name='H12_noise')(h2_en)
+	h2_en=Dense(fe2,kernel_initializer=ker_init,name='H2_layer')(h2_en)
+	h2_en=PReLU(alpha_initializer=Constant(value=prelu_bias),name='H2_activation')(h2_en)
+	h2_en=BatchNormalization(name='H2_batch_norm')(h2_en)
+	
+
+	h3_en=Dropout(drop_ra,name='H3_dropout')(h2_en)
+	h3_en=GaussianNoise(g_noise,name='H3_noise')(h3_en)
+	h3_en=Dense(Bottleneck_Dim,kernel_initializer=ker_init,name='H3_layer')(h3_en)
+	h3_en=PReLU(alpha_initializer=Constant(value=prelu_bias),name='H3_activation')(h3_en)
+	Latent_space=BatchNormalization(name='H3_batch_norm')(h3_en)
+
+	h4_dec=concat([Latent_space,h2_en])
+	h4_dec=Dense(fe3,kernel_initializer=ker_init,name='H4_layer')(Latent_space)
+	h4_dec=PReLU(alpha_initializer=Constant(value=prelu_bias),name='H4_activation')(h4_dec)
+
+	h5_dec=concat([Latent_space,h1_en])
+	h5_dec=Dense(fe4,kernel_initializer=ker_init,name='H5_layer')(h4_dec)
+	h5_dec=PReLU(alpha_initializer=Constant(value=prelu_bias),name='H5_activation')(h5_dec)
+	
+	out_dec=Dense(output_dim,name='Output_layer')(h4_dec)
+
+	if y:
+		out_dec=concat([out_dec,Y_in])
+
+
+
+	Generator=Model(inpu,out_dec)
+	Generator.summary()
+
+	#if compile:
+	#	gen_compile_dic={'loss':sparse_recon_loss_mse,'metrics':metrics,'optimizer':'adam','early_stop':ES}
+	#	Generator.compile(**gen_compile_dic)
+
+	return Generator
